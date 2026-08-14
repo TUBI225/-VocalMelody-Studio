@@ -6,9 +6,9 @@
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
 - Version : 0.1.0 (phase 0 terminée)
 - Plateforme cible : Windows x64
-- Branche Git : `main` (Pull Request #1 depuis `fix/phase-0-build`, CI verte)
-- Dernier commit poussé : `dd7f8ec` - docs(T-001): trace la Pull Request et le declenchement de la CI
-- Dernière mise à jour : 2026-08-14 (CI verte, T-001 TERMINÉ)
+- Branche Git : `main` (Pull Request #1 fusionnée)
+- Dernier commit poussé : `5a8c7c3` - Merge pull request #1 from TUBI225/fix/phase-0-build
+- Dernière mise à jour : 2026-08-14 (phase 0 terminée, PR #1 fusionnée)
 
 ## État général
 
@@ -37,7 +37,7 @@ La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (applica
 
 ## Tâches en cours ou bloquées
 
-- Aucune tâche EN COURS ni BLOQUÉE. La Pull Request #1 (`fix/phase-0-build` vers `main`) est ouverte et la CI est verte ; sa fusion relève de la décision du propriétaire.
+- Aucune tâche EN COURS ni BLOQUÉE. La Pull Request #1 a été fusionnée dans `main` (merge commit `5a8c7c3`).
 
 ## Erreurs et risques critiques
 
@@ -71,4 +71,4 @@ La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (applica
 
 ## Prochaine action recommandée
 
-Fusionner la Pull Request #1 (https://github.com/TUBI225/-VocalMelody-Studio/pull/1) vers `main`, décider du régime de licence JUCE (R-008), puis engager l'Audio Frontend (phase 1) conformément à la feuille de route.
+Décider du régime de licence JUCE (R-008), puis engager la phase 1 (Audio Frontend) conformément à la feuille de route, sur une nouvelle branche de travail à partir de `main`.

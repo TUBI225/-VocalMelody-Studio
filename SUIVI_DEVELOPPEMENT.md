@@ -517,3 +517,29 @@ TERMINÉ.
 - Décider du régime de licence JUCE (AGPLv3 ou commerciale) avant distribution (R-008).
 - Mettre à jour les documents de statut (feuille de route, état actuel, registre des risques).
 
+# 2026-08-14 - T-001.7 - Fusionner la Pull Request #1
+
+## Objectif
+
+Fusionner le socle validé dans `main` pour clôturer la phase 0.
+
+## Travail effectué
+
+- Fusion de la Pull Request #1 via l'API GitHub (méthode `merge`, historique préservé).
+- Synchronisation du dépôt local : `fetch origin`, `switch main`, `merge --ff-only origin/main`.
+
+## Résultats
+
+- Pull Request #1 : état `closed`, `merged=true`, merge commit `5a8c7c346ab5412d101f38f3a6b61dbb901d2925`.
+- Branche `main` distante : `5a8c7c3` (Merge pull request #1 from TUBI225/fix/phase-0-build).
+- Dépôt local : sur `main`, synchronisé avec `origin/main` (fast-forward).
+
+## État final de la tâche
+
+T-001 TERMINÉ - phase 0 clôturée.
+
+## Travail restant
+
+- Décider du régime de licence JUCE (R-008) avant distribution.
+- Engager la phase 1 (Audio Frontend) conformément à la feuille de route.
+
