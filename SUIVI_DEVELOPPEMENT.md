@@ -421,3 +421,46 @@ T-001 reste PARTIEL (builds et tests locaux réussis ; CI non exécutée).
 
 Installer Git, puis committer et pousser vers une branche de travail pour déclencher la CI GitHub Actions.
 
+# 2026-08-14 - T-001.4 - Committer et pousser le socle validé
+
+## Objectif
+
+Placer le socle validé sous contrôle de version et le pousser vers GitHub pour préparer l'exécution de la CI.
+
+## État avant intervention
+
+- Git était absent de la machine ; aucun commit de travail n'existait (l'index ne suivait que `.gitignore` et `README.md`).
+
+## Travail effectué
+
+- Installation de Git pour Windows (MinGit 2.55.0.4) via `winget` (`Git.MinGit`).
+- Configuration Git globale : `core.pager cat`, `user.name TUBI225`, `user.email emiloneufsix@gmail.com`, credential helper Git Credential Manager (fourni par GitHub Desktop).
+- Création de la branche `fix/phase-0-build`.
+- Stage et commit de l'ensemble du socle et de la documentation (31 fichiers, 7741 insertions, 1 suppression).
+- Push de la branche vers `origin` après authentification GitHub.
+
+## Commit associé
+
+- `f83f7a6bed46db5a0fb19f7619b3b2712b299932` - « build(T-001): ajoute et valide le socle C++20 JUCE » - auteur TUBI225 <emiloneufsix@gmail.com> - 2026-08-14.
+- Branche poussée : `fix/phase-0-build` (parent `bb2bbe3` Initial commit).
+
+## Tests exécutés
+
+- `git status --short` après commit : RÉUSSI - working tree propre.
+- Vérification distante (API GitHub) : RÉUSSIE - la branche `fix/phase-0-build` existe avec le commit attendu.
+
+## Décisions prises
+
+- Le risque R-007 (partie « aucun commit de travail ») est résolu : tout le travail T-000 et T-001 est désormais commité et poussé.
+- La CI se déclenchera sur l'événement `pull_request` : une Pull Request vers `main` reste à créer.
+
+## État final de la tâche
+
+T-001 reste PARTIEL (builds et tests locaux réussis, branche poussée ; CI non encore exécutée).
+
+## Travail restant
+
+- Créer la Pull Request depuis `fix/phase-0-build` vers `main` (lien : https://github.com/TUBI225/-VocalMelody-Studio/pull/new/fix/phase-0-build).
+- Attendre la CI (builds Debug/Release, CTest, contrôle `clang-format`).
+- Après CI verte, marquer T-001 TERMINÉ.
+

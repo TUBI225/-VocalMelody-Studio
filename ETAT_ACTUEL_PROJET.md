@@ -6,9 +6,9 @@
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
 - Version : 0.1.0 (phase 0 partielle)
 - Plateforme cible : Windows x64
-- Branche Git : `main`
-- Dernier commit observé : `bb2bbe3` - Initial commit
-- Dernière mise à jour : 2026-08-14 (builds et tests Debug/Release réussis localement ; CI restante)
+- Branche Git : `main` (branche de travail `fix/phase-0-build` poussée)
+- Dernier commit poussé : `f83f7a6bed46db5a0fb19f7619b3b2712b299932` - build(T-001): ajoute et valide le socle C++20 JUCE
+- Dernière mise à jour : 2026-08-14 (socle commité et poussé ; CI restante via Pull Request)
 
 ## État général
 
@@ -39,12 +39,12 @@ La documentation permanente est initialisée. Le premier socle C++20/CMake/JUCE,
 ## Tâches en cours ou bloquées
 
 - Aucune tâche marquée EN COURS.
-- Validation locale de T-001 : RÉUSSIE (configurations, builds et CTest Debug/Release). Le seul reste pour T-001 TERMINÉ est l'exécution de la CI (push + Pull Request), bloquée par l'absence de Git sur la machine ; aucun commit de travail n'existe encore.
+- Validation locale de T-001 : RÉUSSIE (configurations, builds et CTest Debug/Release). Socle commité (`f83f7a6`) et poussé sur la branche `fix/phase-0-build`. Le seul reste pour T-001 TERMINÉ est la CI : créer la Pull Request vers `main` puis attendre la CI verte.
 
 ## Erreurs et risques critiques
 
 - Erreur critique applicative connue : aucune, application compilée mais non exécutée interactivement.
-- R-007 : RÉSOLU pour la compilation locale - toolchain installée et opérationnelle ; téléchargement JUCE contourné par vérification SHA-256 puis configuration hors ligne. Reste : Git absent (bloque le commit et la CI).
+- R-007 : RÉSOLU pour la compilation locale et le contrôle de version - toolchain installée, téléchargement JUCE contourné par vérification SHA-256 puis configuration hors ligne, Git installé et socle commité/poussé.
 - R-008 : régime de licence JUCE à décider avant distribution.
 - R-002 : conservation de l'incertitude toujours prioritaire pour les futures structures L0/L1/L2.
 
@@ -72,4 +72,4 @@ La documentation permanente est initialisée. Le premier socle C++20/CMake/JUCE,
 
 ## Prochaine action recommandée
 
-Installer Git pour Windows, committer le socle sur une branche de travail (`fix/phase-0-build`), pousser et ouvrir une Pull Request pour exécuter la CI GitHub (`windows-2022`, builds Debug/Release, tests CTest, contrôle `clang-format`). Les configurations, builds et tests Debug/Release réussissent localement ; T-001 ne passera à TERMINÉ qu'après une CI verte.
+Créer la Pull Request depuis `fix/phase-0-build` vers `main` (lien : https://github.com/TUBI225/-VocalMelody-Studio/pull/new/fix/phase-0-build). La CI GitHub (`windows-2022`, builds Debug/Release, tests CTest, contrôle `clang-format`) se déclenchera sur l'événement `pull_request`. Après une CI verte, T-001 pourra passer à TERMINÉ.
