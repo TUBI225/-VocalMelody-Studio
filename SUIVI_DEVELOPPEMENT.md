@@ -652,3 +652,47 @@ PARTIEL - import WAV validé ; lecture audio et corpus réel (MP3/M4A) à venir.
 - Lecture audio dans l'application (transport).
 - Corpus de test réel (MP3/M4A, fichiers longs, corrompus) et tests d'intégration « import -> analyse -> sauvegarde metadata ».
 
+# 2026-08-14 - T-101.2 - Lecture audio dans l'application
+
+## Objectif
+
+Permettre l'import d'un fichier audio depuis l'application et sa lecture (transport), avec affichage des diagnostics.
+
+## Travail effectué
+
+- `MainComponent` enrichi :
+  - bouton « Importer... » (FileChooser, filtres *.wav;*.mp3;*.m4a) ;
+  - import via `AudioFileImporter` (VocalMelody::Audio) ;
+  - lecture via `AudioDeviceManager`, `AudioSourcePlayer` et `AudioTransportSource` (modules JUCE `juce_audio_devices`, `juce_audio_utils`) ;
+  - bouton « Lecture / Pause » ;
+  - affichage des diagnostics : format, sample rate, canaux, durée, scores de clipping/silence/qualité, nombre de segments de silence.
+- `src/app/CMakeLists.txt` : liens ajoutés (VocalMelody::Audio, juce_audio_devices, juce_audio_utils).
+
+## Fichiers modifiés
+
+- `src/app/MainComponent.h`
+- `src/app/MainComponent.cpp`
+- `src/app/CMakeLists.txt`
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI - application `VocalMelody Studio.exe` compilée avec les modules audio (`/W4 /WX`, aucune erreur ni avertissement applicatif).
+- CTest Debug : RÉUSSI - `100% tests passed out of 3`.
+- Lecture interactive : NON TESTÉE (nécessite un périphérique audio et une validation manuelle).
+- Conformité `clang-format` : RÉUSSIE.
+
+## Décisions prises
+
+- L'import produit deux flux indépendants : les diagnostics via `AudioFileImporter` (domaine) et le transport de lecture via JUCE (lecteur dédié), afin de ne pas coupler le domaine au décodage.
+- L'audio original n'est jamais modifié : l'analyse lit le fichier, la lecture utilise un lecteur séparé sur le même fichier.
+
+## État final de la tâche
+
+PARTIEL - import + lecture implémentés (à valider manuellement) ; corpus réel et métadonnées à venir.
+
+## Travail restant
+
+- Validation manuelle de la lecture (périphérique audio).
+- Corpus de test réel (MP3/M4A, fichiers longs, corrompus) et tests d'intégration « import -> analyse -> sauvegarde metadata ».
+- Validation Release et CI (run à suivre).
+
