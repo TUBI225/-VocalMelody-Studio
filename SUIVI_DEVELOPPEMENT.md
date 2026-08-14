@@ -696,3 +696,57 @@ PARTIEL - import + lecture implémentés (à valider manuellement) ; corpus rée
 - Corpus de test réel (MP3/M4A, fichiers longs, corrompus) et tests d'intégration « import -> analyse -> sauvegarde metadata ».
 - Validation Release et CI (run à suivre).
 
+# 2026-08-14 - T-101.3 - Corpus de tests d'intégration et métadonnées JSON
+
+## Objectif
+
+Étendre les tests d'intégration à un corpus de signaux variés et sérialiser les métadonnées d'import (AudioSource + AudioAnalysisResult) en JSON.
+
+## Travail effectué
+
+- Sérialiseur JSON dans le domaine commun (`JsonWriter`) : objets, tableaux, clés/valeurs, échappement des chaînes, nombres, booléens, null — sans dépendance externe, testé.
+- Sérialisation des métadonnées audio (`src/audio`) : `audioMetadataToJson(AudioImportResult)` et `saveAudioMetadata(result, path)` (source + analyse, segments de silence, avertissements).
+- Tests d'intégration `audio.metadata` (corpus) :
+  - WAV mono 44,1 kHz et stéréo 22,05 kHz, signaux constant, silencieux et écrêté (clipping) ;
+  - diagnostics fiables (clipping détecté, silence détecté) ;
+  - sérialisation JSON vérifiée (champs attendus) ;
+  - sauvegarde du fichier de métadonnées et relecture ;
+  - **fichier audio original jamais modifié** (hash FNV-1a avant/après import).
+- Refactor : helpers de test partagés `WavTestHelpers.h` (écriture WAV, chemins temporaires, hash FNV-1a), utilisés par les tests d'import et de métadonnées.
+
+## Corrections apportées
+
+- `JsonWriter` : la virgule est gérée par la clé (et non la valeur) et supprimée après `:` ; ajout d'une surcharge `value(const char*)` pour éviter la conversion implicite des littéraux en `bool`.
+
+## Fichiers créés
+
+- `src/common/include/vocalmelody/common/JsonWriter.h`
+- `src/common/JsonWriter.cpp`
+- `src/audio/include/vocalmelody/audio/AudioMetadataSerializer.h`
+- `src/audio/AudioMetadataSerializer.cpp`
+- `tests/unit/JsonWriterTests.cpp`
+- `tests/unit/AudioMetadataTests.cpp`
+- `tests/unit/WavTestHelpers.h`
+
+## Fichiers modifiés
+
+- `src/common/CMakeLists.txt`, `src/audio/CMakeLists.txt`, `tests/CMakeLists.txt`
+- `tests/unit/AudioImporterTests.cpp` (helpers partagés)
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI (`/W4 /WX`, aucune erreur ni avertissement applicatif).
+- CTest Debug : RÉUSSI - `100% tests passed out of 5` (strong_types, json_writer, signal_analysis, file_import, metadata).
+- Build Release : lancé (résultat à confirmer).
+- Conformité `clang-format` : RÉUSSIE.
+
+## État final de la tâche
+
+PARTIEL - corpus de tests d'intégration et métadonnées JSON en place ; validation manuelle de la lecture et corpus réel (MP3/M4A) restants.
+
+## Travail restant
+
+- Validation manuelle de la lecture (périphérique audio).
+- Corpus réel (MP3/M4A, fichiers longs, corrompus).
+- Validation Release et CI (run à suivre).
+

@@ -5,6 +5,13 @@ vocalmelody_enable_warnings(VocalMelodyCommonTests)
 
 add_test(NAME common.strong_types COMMAND VocalMelodyCommonTests)
 
+add_executable(VocalMelodyJsonTests unit/JsonWriterTests.cpp)
+
+target_link_libraries(VocalMelodyJsonTests PRIVATE VocalMelody::Common)
+vocalmelody_enable_warnings(VocalMelodyJsonTests)
+
+add_test(NAME common.json_writer COMMAND VocalMelodyJsonTests)
+
 add_executable(VocalMelodyFrontendTests unit/SignalAnalysisTests.cpp)
 
 target_link_libraries(VocalMelodyFrontendTests PRIVATE VocalMelody::Frontend VocalMelody::Common)
@@ -19,4 +26,11 @@ if(TARGET VocalMelody::Audio)
     vocalmelody_enable_warnings(VocalMelodyAudioImporterTests)
 
     add_test(NAME audio.file_import COMMAND VocalMelodyAudioImporterTests)
+
+    add_executable(VocalMelodyAudioMetadataTests unit/AudioMetadataTests.cpp)
+
+    target_link_libraries(VocalMelodyAudioMetadataTests PRIVATE VocalMelody::Audio)
+    vocalmelody_enable_warnings(VocalMelodyAudioMetadataTests)
+
+    add_test(NAME audio.metadata COMMAND VocalMelodyAudioMetadataTests)
 endif()

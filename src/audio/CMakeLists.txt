@@ -1,5 +1,6 @@
 add_library(vocalmelody_audio STATIC
     AudioFileImporter.cpp
+    AudioMetadataSerializer.cpp
 )
 add_library(VocalMelody::Audio ALIAS vocalmelody_audio)
 
