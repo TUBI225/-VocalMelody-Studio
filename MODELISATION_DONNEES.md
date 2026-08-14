@@ -1673,9 +1673,33 @@ Types non encore implémentés :
 - `MidiPitch` ;
 - `Cents` ;
 - identifiants stables ;
-- `AudioSource` et `AudioAnalysisResult` ;
 - structures L0, L1 et L2.
 
 Validation :
-Les tests unitaires source couvrent les bornes, les valeurs négatives, NaN et l'infini.
-Ils n'ont pas encore été compilés ni exécutés faute de toolchain C++ locale.
+Les tests unitaires source couvrent les bornes, les valeurs négatives, NaN et l'infini. Ils sont compilés et exécutés (Debug et Release, CI verte) ; le test CTest `common.strong_types` passe à 100 %.
+
+======================================================================
+98. ETAT D'IMPLEMENTATION - STRUCTURES AUDIO (PHASE 1)
+======================================================================
+
+Date : 2026-08-14
+Version du code : 0.1.0
+
+Structures effectivement introduites (phase 1 - Audio Frontend) :
+
+- `AudioFormat` (enum : Unknown, Wav, Mp3, M4a) avec `audioFormatFromExtension` et `audioFormatToString`.
+- `AudioSource` : immuable, créée via `AudioSource::create` (validation : id/chemin/date/hash non vides, sample rate/canaux/bit depth positifs, format connu). Champs : id, originalPath, importedAt, originalFormat, sampleRate, channelCount, bitDepth, durationSeconds (`Seconds`), fileHash.
+- `SilenceSegment` : plage `Seconds` début/fin, créée via `SilenceSegment::create` (validation : start < end).
+- `AudioAnalysisResult` : créée via `AudioAnalysisResult::create` (validation : audioSourceId non vide, version >= 0, sample rate > 0). Champs : audioSourceId, analysisVersion, durationSeconds, analysisSampleRate, monoAnalysisPath, clippingScore (`Score01`), noiseScore (`Score01`), voicePresenceScore (`Score01`), silenceMap, qualityScore (`Score01`), warnings.
+
+Module d'analyse (indépendant de JUCE) :
+- `vocalmelody_frontend` (`src/frontend`) : analyse de trames mono — RMS, peak, score de clipping, ratio de silence, détection de segments de silence, plancher de bruit approximatif, downmix stéréo vers mono.
+
+Validation :
+- Test CTest `frontend.signal_analysis` : RÉUSSI (signal vide, sample rate invalide, constant, clipping, silence, segments, bruit, downmix).
+- Les structures `AudioSource` et `AudioAnalysisResult` correspondent aux sections 5 et 6 du présent document.
+
+Reste à implémenter (phase 1) :
+- Décodage et import réels de fichiers WAV/MP3/M4A (adossé à JUCE `juce_audio_formats`).
+- Lecture audio et production de la version mono d'analyse.
+- Alimentation réelle de `AudioAnalysisResult` (durée, sample rate, canaux, diagnostics).

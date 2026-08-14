@@ -543,3 +543,64 @@ T-001 TERMINÉ - phase 0 clôturée.
 - Décider du régime de licence JUCE (R-008) avant distribution.
 - Engager la phase 1 (Audio Frontend) conformément à la feuille de route.
 
+# 2026-08-14 - T-101 - Socle de la phase 1 : Audio Frontend
+
+## Objectif
+
+Démarrer la phase 1 (Audio Frontend) par son socle : structures de données du domaine (AudioSource, AudioAnalysisResult) et analyse de signal pure, testable sans JUCE.
+
+## Travail effectué
+
+- Nouveau module `src/frontend` (analyse de signal indépendante de JUCE) :
+  - `SignalAnalysis` : RMS, peak, score de clipping, ratio de silence, détection de segments de silence, estimation du plancher de bruit, downmix stéréo vers mono.
+- Structures de domaine dans `src/common` (conformes à MODELISATION_DONNEES) :
+  - `AudioSource` (id, chemin original, date d'import, format, sample rate, canaux, bit depth, durée, hash du fichier — immuable, validation par factory `create`).
+  - `AudioAnalysisResult` (id de source, version d'analyse, durée, sample rate d'analyse, chemin mono, scores clipping/bruit/présence vocale/qualité en `Score01`, carte de silence, avertissements).
+  - `SilenceSegment` (plage `Seconds` début/fin, validée).
+  - `AudioFormat` (Unknown/Wav/Mp3/M4a) avec conversion depuis l'extension.
+- `vocalmelody_common` passe de `INTERFACE` à `STATIC` (sources `.cpp`).
+- Refactor : `TestContext` partagé dans `tests/unit/TestContext.h`.
+- Tests : `frontend.signal_analysis` (signal vide, sample rate invalide, constant, clipping, silence, segments, bruit, downmix) + `common.strong_types` conservé.
+
+## Fichiers créés
+
+- `src/frontend/CMakeLists.txt`
+- `src/frontend/include/vocalmelody/frontend/SignalAnalysis.h`
+- `src/frontend/SignalAnalysis.cpp`
+- `src/common/include/vocalmelody/common/AudioSource.h`
+- `src/common/include/vocalmelody/common/AudioAnalysisResult.h`
+- `src/common/AudioSource.cpp`
+- `src/common/AudioAnalysisResult.cpp`
+- `tests/unit/TestContext.h`
+- `tests/unit/SignalAnalysisTests.cpp`
+
+## Fichiers modifiés
+
+- `CMakeLists.txt` (add_subdirectory src/frontend)
+- `src/common/CMakeLists.txt` (INTERFACE -> STATIC)
+- `tests/CMakeLists.txt` (test frontend.signal_analysis)
+- `tests/unit/StrongTypesTests.cpp` (TestContext partagé)
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI - `vocalmelody_common.lib`, `vocalmelody_frontend.lib`, `VocalMelodyFrontendTests.exe`, application (`/W4 /WX`, aucune erreur ni avertissement).
+- CTest Debug : RÉUSSI - `100% tests passed out of 2` (`common.strong_types` 0,01 s ; `frontend.signal_analysis` 0,79 s).
+- Build Release : lancé (résultat à confirmer).
+- Conformité `clang-format` : RÉUSSIE - 14/14 fichiers.
+
+## Décisions prises
+
+- Le socle de l'Audio Frontend est conçu indépendant de JUCE (analyse pure des trames mono) afin de rester testable et conforme aux règles de codage (« les tests ne doivent pas dépendre de JUCE lorsqu'ils vérifient uniquement le domaine commun »).
+- Le décodage de fichiers WAV/MP3/M4A et la lecture (fonctions de la phase 1) viendront dans les prochaines étapes, adossés à JUCE (`juce_audio_formats`).
+
+## État final de la tâche
+
+PARTIEL - socle du frontend compilé et testé en Debug ; lecture/import réels à venir.
+
+## Travail restant
+
+- Importer/valider des fichiers réels (WAV/MP3/M4A) via JUCE.
+- Alimenter `AudioSource` et `AudioAnalysisResult` depuis les fichiers décodés.
+- Tests d'intégration « import -> analyse -> sauvegarde metadata ».
+- Valider le Release localement et via la CI.
+

@@ -4,15 +4,15 @@
 
 - Projet : VocalMelody Studio
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
-- Version : 0.1.0 (phase 0 terminée)
+- Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend en cours)
 - Plateforme cible : Windows x64
-- Branche Git : `main` (Pull Request #1 fusionnée)
-- Dernier commit poussé : `5a8c7c3` - Merge pull request #1 from TUBI225/fix/phase-0-build
-- Dernière mise à jour : 2026-08-14 (phase 0 terminée, PR #1 fusionnée)
+- Branche Git : `main` (branche de travail `phase1/audio-frontend`)
+- Dernier commit poussé : `6f00ef9` - docs(T-001): trace la fusion de la Pull Request #1
+- Dernière mise à jour : 2026-08-14 (socle phase 1 : structures audio et analyse de signal)
 
 ## État général
 
-La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (application minimale, types forts communs, test unitaire, CI Windows) est présent, compilé et validé. Les configurations, builds et tests CTest **réussissent en Debug et en Release** localement (MSVC 19.44, `/W4 /WX`, `common.strong_types` à 100 %) et **la CI GitHub est verte** (run `ci`, jobs Debug/Release, contrôle `clang-format`). Le socle est commité et poussé (branche `fix/phase-0-build`, Pull Request #1). **La phase 0 est terminée** : T-001 passe à TERMINÉ. Restent, hors critères de la phase 0 : fusionner la Pull Request, décider du régime de licence JUCE (R-008) avant distribution, puis engager l'Audio Frontend (phase 1).
+La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (application minimale, types forts communs, test unitaire, CI Windows) est présent, compilé et validé ; la phase 0 est terminée (T-000 et T-001 TERMINÉ, PR #1 fusionnée). La **phase 1 (Audio Frontend)** est engagée par son socle : structures de domaine `AudioSource`, `AudioAnalysisResult`, `SilenceSegment`, `AudioFormat` et module `src/frontend` d'analyse de signal pure (RMS, peak, clipping, silence, bruit, downmix). Le socle est compilé et testé en Debug (`100% tests passed out of 2`). Restent pour la phase 1 : décodage/import réels WAV/MP3/M4A via JUCE, lecture, alimentation des diagnostics, tests d'intégration et validation CI.
 
 ## Tâches par statut
 
@@ -20,7 +20,7 @@ La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (applica
 |---|---:|
 | TERMINÉ | 2 |
 | EN COURS | 0 |
-| PARTIEL | 0 |
+| PARTIEL | 1 |
 | À VÉRIFIER | 0 |
 | BLOQUÉ | 0 |
 | À FAIRE | 0 |
@@ -33,11 +33,11 @@ La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (applica
 
 ## Fonctions partielles
 
-- Aucune.
+- T-101 (phase 1, Audio Frontend) : socle présent — structures `AudioSource`/`AudioAnalysisResult`/`SilenceSegment`/`AudioFormat` et analyse de signal pure (`src/frontend`) compilées et testées en Debug ; décodage/import de fichiers réels et lecture non encore implémentés.
 
 ## Tâches en cours ou bloquées
 
-- Aucune tâche EN COURS ni BLOQUÉE. La Pull Request #1 a été fusionnée dans `main` (merge commit `5a8c7c3`).
+- T-101 (socle phase 1 Audio Frontend) : PARTIEL - compilé et testé en Debug ; import/lecture à venir. La Pull Request #1 a été fusionnée dans `main` (merge commit `5a8c7c3`).
 
 ## Erreurs et risques critiques
 
@@ -71,4 +71,4 @@ La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (applica
 
 ## Prochaine action recommandée
 
-Décider du régime de licence JUCE (R-008), puis engager la phase 1 (Audio Frontend) conformément à la feuille de route, sur une nouvelle branche de travail à partir de `main`.
+Poursuivre la phase 1 : décoder et importer des fichiers réels (WAV/MP3/M4A) via JUCE (`juce_audio_formats`), alimenter `AudioSource` et `AudioAnalysisResult`, ajouter la lecture et les tests d'intégration « import → analyse → sauvegarde metadata », puis valider la CI.

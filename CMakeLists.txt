@@ -22,6 +22,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(VocalMelodyWarnings)
 
 add_subdirectory(src/common)
+add_subdirectory(src/frontend)
 
 if(VOCALMELODY_BUILD_APP)
     FetchContent_Declare(
