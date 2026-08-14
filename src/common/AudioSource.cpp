@@ -12,7 +12,15 @@ AudioFormat audioFormatFromExtension(const std::string_view extension) noexcept 
         return AudioFormat::Unknown;
     }
 
-    auto lower = std::string(extension);
+    std::string_view normalized = extension;
+    if (normalized.front() == '.') {
+        normalized.remove_prefix(1);
+    }
+    if (normalized.empty()) {
+        return AudioFormat::Unknown;
+    }
+
+    auto lower = std::string(normalized);
     std::transform(lower.begin(), lower.end(), lower.begin(),
                    [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
 

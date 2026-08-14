@@ -604,3 +604,51 @@ PARTIEL - socle du frontend compilé et testé en Debug ; lecture/import réels 
 - Tests d'intégration « import -> analyse -> sauvegarde metadata ».
 - Valider le Release localement et via la CI.
 
+# 2026-08-14 - T-101.1 - Import audio WAV via JUCE
+
+## Objectif
+
+Décoder et importer de vrais fichiers audio et produire `AudioSource` + `AudioAnalysisResult` à partir du fichier décodé.
+
+## Travail effectué
+
+- Nouveau module `src/audio` (bibliothèque liée à JUCE) :
+  - `AudioFileImporter` : décodage via `juce::AudioFormatManager`/`AudioFormatReader`, lecture des trames, downmix stéréo vers mono (`SignalAnalysis::downmixToMono`), calcul des diagnostics (`analyzeSignal`, `detectSilenceSegments`, `estimateNoiseFloor`), hachage FNV-1a du fichier, production de `AudioSource` et `AudioAnalysisResult`.
+- Correction : `audioFormatFromExtension` ignore désormais un point initial (`.wav` -> `wav`) ; sans cela, l'extension retournée par JUCE (avec point) produisait `AudioFormat::Unknown` et l'import était rejeté.
+- Tests `audio.file_import` : génération de WAV PCM 16 bits en mémoire (mono 44,1 kHz ; stéréo 22,05 kHz), fichier non-audio rejeté, fichier manquant rejeté.
+
+## Fichiers créés
+
+- `src/audio/CMakeLists.txt`
+- `src/audio/include/vocalmelody/audio/AudioFileImporter.h`
+- `src/audio/AudioFileImporter.cpp`
+- `tests/unit/AudioImporterTests.cpp`
+
+## Fichiers modifiés
+
+- `CMakeLists.txt` (add_subdirectory src/audio dans le bloc JUCE)
+- `tests/CMakeLists.txt` (test audio.file_import, conditionné à la disponibilité de JUCE)
+- `src/common/AudioSource.cpp` (audioFormatFromExtension tolère le point initial)
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI - `vocalmelody_audio.lib` et `VocalMelodyAudioImporterTests.exe` (`/W4 /WX`, aucune erreur ni avertissement applicatif).
+- CTest Debug : RÉUSSI - `100% tests passed out of 3` (`common.strong_types`, `frontend.signal_analysis`, `audio.file_import`).
+- Build Release : lancé (résultat à confirmer).
+- Conformité `clang-format` : RÉUSSIE.
+
+## Décisions prises
+
+- Le décodage de fichiers est isolé dans `src/audio` (dépend de JUCE), tandis que l'analyse de signal reste pure (`src/frontend`, sans JUCE). Les tests de l'import dépendent de JUCE (couche audio, pas le domaine commun).
+- L'import prend en charge WAV/MP3/M4A selon les formats enregistrés par `registerBasicFormats` (décodage WAV vérifié par tests ; MP3/M4A à valider avec un corpus réel).
+
+## État final de la tâche
+
+PARTIEL - import WAV validé ; lecture audio et corpus réel (MP3/M4A) à venir.
+
+## Travail restant
+
+- Valider le Release localement et via la CI.
+- Lecture audio dans l'application (transport).
+- Corpus de test réel (MP3/M4A, fichiers longs, corrompus) et tests d'intégration « import -> analyse -> sauvegarde metadata ».
+

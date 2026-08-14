@@ -33,6 +33,7 @@ if(VOCALMELODY_BUILD_APP)
     )
     FetchContent_MakeAvailable(JUCE)
     add_subdirectory(src/app)
+    add_subdirectory(src/audio)
 endif()
 
 if(BUILD_TESTING)
