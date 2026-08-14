@@ -464,3 +464,28 @@ T-001 reste PARTIEL (builds et tests locaux réussis, branche poussée ; CI non 
 - Attendre la CI (builds Debug/Release, CTest, contrôle `clang-format`).
 - Après CI verte, marquer T-001 TERMINÉ.
 
+# 2026-08-14 - T-001.5 - Créer la Pull Request et déclencher la CI
+
+## Objectif
+
+Créer la Pull Request vers `main` pour déclencher la CI GitHub Actions sur le socle validé.
+
+## Travail effectué
+
+- Création de la Pull Request #1 via l'API GitHub (authentification réutilisée via le credential manager).
+- Vérification du déclenchement du workflow `ci`.
+
+## Résultats
+
+- Pull Request #1 : https://github.com/TUBI225/-VocalMelody-Studio/pull/1 - « build(T-001): ajoute et valide le socle C++20 JUCE » - état `open`, 2 commits, 31 fichiers, +7784/−1.
+- Workflow CI : run #1 (https://github.com/TUBI225/-VocalMelody-Studio/actions/runs/31802211276) - événement `pull_request` - statut observé : `in_progress`.
+
+## État final de la tâche
+
+T-001 reste PARTIEL (CI en cours d'exécution).
+
+## Travail restant
+
+- Attendre la fin de la CI (builds Debug/Release, CTest, contrôle `clang-format`).
+- Après CI verte, marquer T-001 TERMINÉ.
+
