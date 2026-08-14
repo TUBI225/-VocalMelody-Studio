@@ -489,3 +489,31 @@ T-001 reste PARTIEL (CI en cours d'exécution).
 - Attendre la fin de la CI (builds Debug/Release, CTest, contrôle `clang-format`).
 - Après CI verte, marquer T-001 TERMINÉ.
 
+# 2026-08-14 - T-001.6 - CI verte : T-001 TERMINÉ
+
+## Objectif
+
+Confirmer la réussite de la CI sur la Pull Request et clôturer la tâche T-001.
+
+## Résultats
+
+- Workflow `ci` (run #2, head `dd7f8ec`) : STATUT `completed`, CONCLUSION `success`.
+- Job Windows x64 Debug : success - Checkout, Check formatting (`clang-format`), Configure, Build, Test, Complete job.
+- Job Windows x64 Release : success - mêmes étapes.
+- Les critères de sortie de la phase 0 sont donc tous satisfaits : build minimal, tests minimaux, CI verte, structure stable.
+
+## Décisions prises
+
+- T-001 passe à TERMINÉ.
+- La phase 0 est terminée ; l'Audio Frontend (phase 1) peut être engagé après fusion de la Pull Request et décision de licence JUCE.
+
+## État final de la tâche
+
+TERMINÉ.
+
+## Travail restant
+
+- Fusionner la Pull Request #1 vers `main` (recommandé par le propriétaire).
+- Décider du régime de licence JUCE (AGPLv3 ou commerciale) avant distribution (R-008).
+- Mettre à jour les documents de statut (feuille de route, état actuel, registre des risques).
+

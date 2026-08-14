@@ -4,47 +4,46 @@
 
 - Projet : VocalMelody Studio
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
-- Version : 0.1.0 (phase 0 partielle)
+- Version : 0.1.0 (phase 0 terminée)
 - Plateforme cible : Windows x64
-- Branche Git : `main` (branche de travail `fix/phase-0-build` poussée)
-- Dernier commit poussé : `f83f7a6bed46db5a0fb19f7619b3b2712b299932` - build(T-001): ajoute et valide le socle C++20 JUCE
-- Dernière mise à jour : 2026-08-14 (socle commité et poussé ; CI restante via Pull Request)
+- Branche Git : `main` (Pull Request #1 depuis `fix/phase-0-build`, CI verte)
+- Dernier commit poussé : `dd7f8ec` - docs(T-001): trace la Pull Request et le declenchement de la CI
+- Dernière mise à jour : 2026-08-14 (CI verte, T-001 TERMINÉ)
 
 ## État général
 
-La documentation permanente est initialisée. Le premier socle C++20/CMake/JUCE, l'application minimale, les types forts communs, le test unitaire source et la CI Windows Debug/Release sont présents. La toolchain locale est installée (CMake 4.4.2, MSVC 19.44, clang-format). Les deux blocages de configuration CMake ont été corrigés et validés. Les configurations, builds et tests CTest **réussissent en Debug et en Release** localement (application `VocalMelody Studio.exe` produite, test `common.strong_types` à 100 %). Le téléchargement de l'archive JUCE a été contourné localement par une vérification SHA-256 puis une configuration hors ligne (`FETCHCONTENT_SOURCE_DIR_JUCE`). La phase 0 n'est pas terminée : la CI GitHub n'a pas encore été exécutée (Git absent de la machine) et aucun commit de travail n'existe.
+La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (application minimale, types forts communs, test unitaire, CI Windows) est présent, compilé et validé. Les configurations, builds et tests CTest **réussissent en Debug et en Release** localement (MSVC 19.44, `/W4 /WX`, `common.strong_types` à 100 %) et **la CI GitHub est verte** (run `ci`, jobs Debug/Release, contrôle `clang-format`). Le socle est commité et poussé (branche `fix/phase-0-build`, Pull Request #1). **La phase 0 est terminée** : T-001 passe à TERMINÉ. Restent, hors critères de la phase 0 : fusionner la Pull Request, décider du régime de licence JUCE (R-008) avant distribution, puis engager l'Audio Frontend (phase 1).
 
 ## Tâches par statut
 
 | Statut | Nombre |
 |---|---:|
-| TERMINÉ | 1 |
+| TERMINÉ | 2 |
 | EN COURS | 0 |
-| PARTIEL | 1 |
+| PARTIEL | 0 |
 | À VÉRIFIER | 0 |
 | BLOQUÉ | 0 |
 | À FAIRE | 0 |
 
 ## Fonctions terminées
 
-- Aucune fonction musicale ou audio.
 - Infrastructure documentaire T-000 terminée.
+- T-001 : socle de build C++20/JUCE/CMake, application minimale, types forts `Seconds`, `Beats`, `Probability`, `Score01`, test CTest et CI Windows — builds/tests Debug/Release réussis et CI verte.
+- Aucune fonction musicale ou audio (phase 1 à venir).
 
 ## Fonctions partielles
 
-- T-001 : socle de build C++20/JUCE/CMake et CI présents ; configurations, builds et tests Debug/Release réussis localement ; CI non encore exécutée.
-- Coquille d'application JUCE sans fonction audio, compilée en Debug et Release.
-- Types forts `Seconds`, `Beats`, `Probability` et `Score01` avec tests unitaires passés à 100 % (Debug et Release).
+- Aucune.
 
 ## Tâches en cours ou bloquées
 
-- Aucune tâche marquée EN COURS.
-- Validation locale de T-001 : RÉUSSIE (configurations, builds et CTest Debug/Release). Socle commité (`f83f7a6`) et poussé sur la branche `fix/phase-0-build`. Le seul reste pour T-001 TERMINÉ est la CI : créer la Pull Request vers `main` puis attendre la CI verte.
+- Aucune tâche EN COURS ni BLOQUÉE. La Pull Request #1 (`fix/phase-0-build` vers `main`) est ouverte et la CI est verte ; sa fusion relève de la décision du propriétaire.
 
 ## Erreurs et risques critiques
 
 - Erreur critique applicative connue : aucune, application compilée mais non exécutée interactivement.
-- R-007 : RÉSOLU pour la compilation locale et le contrôle de version - toolchain installée, téléchargement JUCE contourné par vérification SHA-256 puis configuration hors ligne, Git installé et socle commité/poussé.
+- R-001 : RÉDUIT - builds locaux et CI réussis (MSVC 19.44, CMake 4.4.2).
+- R-007 : RÉSOLU - toolchain installée, téléchargement JUCE vérifié (SHA-256) puis configuration hors ligne, Git installé et socle commité/poussé.
 - R-008 : régime de licence JUCE à décider avant distribution.
 - R-002 : conservation de l'incertitude toujours prioritaire pour les futures structures L0/L1/L2.
 
@@ -68,8 +67,8 @@ La documentation permanente est initialisée. Le premier socle C++20/CMake/JUCE,
 - Configuration Release : RÉUSSIE - `-- Configuring done (196.1s)` ; avertissement JUCE BUNDLE_ID corrigé.
 - Build Release : RÉUSSI - les deux exécutables Release produits.
 - CTest Release : RÉUSSI - `100% tests passed out of 1` (0,85 s).
-- CI distante : NON EXÉCUTÉE - Git absent ; changements non commités et non poussés.
+- CI distante : RÉUSSIE - workflow `ci` (run #2, head `dd7f8ec`) conclusion `success` ; jobs Debug et Release complets (checkout, formatage, configure, build, test).
 
 ## Prochaine action recommandée
 
-Créer la Pull Request depuis `fix/phase-0-build` vers `main` (lien : https://github.com/TUBI225/-VocalMelody-Studio/pull/new/fix/phase-0-build). La CI GitHub (`windows-2022`, builds Debug/Release, tests CTest, contrôle `clang-format`) se déclenchera sur l'événement `pull_request`. Après une CI verte, T-001 pourra passer à TERMINÉ.
+Fusionner la Pull Request #1 (https://github.com/TUBI225/-VocalMelody-Studio/pull/1) vers `main`, décider du régime de licence JUCE (R-008), puis engager l'Audio Frontend (phase 1) conformément à la feuille de route.

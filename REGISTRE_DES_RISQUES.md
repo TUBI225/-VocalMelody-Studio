@@ -2,7 +2,7 @@
 
 | ID | Risque | Probabilité | Impact | Priorité | Prévention / détection | Solution de secours | Tests liés | Statut |
 |---|---|---|---|---|---|---|---|---|
-| R-001 | La stack C++20/JUCE ne peut pas être construite de façon reproductible sur Windows x64 | Moyenne | Élevé | Haute | Prototype minimal, build propre et CI dès T-001 | Réévaluer le framework via ADR | Build Debug/Release, CI | OUVERT |
+| R-001 | La stack C++20/JUCE ne peut pas être construite de façon reproductible sur Windows x64 | Faible (après validation) | Élevé | Haute | Prototype minimal, build propre et CI dès T-001 | Réévaluer le framework via ADR | Build Debug/Release, CI | RÉDUIT - builds locaux et CI réussis (MSVC 19.44, CMake 4.4.2) |
 | R-002 | Réduction trop précoce de l'incertitude acoustique, entraînant une perte de l'intention vocale | Moyenne | Critique | Critique | Contrats L0/L1/L2 versionnés, top-k et distributions conservés | Revenir aux données acoustiques et recalculer | Tests lattice top-k et intention | OUVERT |
 | R-003 | Fichiers audio invalides, énormes ou malveillants | Moyenne | Élevé | Haute | Limites de taille/durée, validation de format, erreurs fermées | Rejet propre sans modification du projet | Corpus fichiers vides/corrompus | OUVERT |
 | R-004 | Modèle ou dépendance incompatible avec la redistribution commerciale | Moyenne | Élevé | Haute | Audit de licence avant intégration et registre des versions | Remplacement par une alternative compatible | Revue de dépendances | OUVERT |

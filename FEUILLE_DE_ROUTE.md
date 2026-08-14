@@ -1212,26 +1212,25 @@ Critères de validation :
 - l'état Git et l'encodage sont vérifiés.
 
 T-001 - Créer le socle C++20 / JUCE / CMake
-Statut : PARTIEL
+Statut : TERMINÉ
 Priorité : CRITIQUE
 Dépendances : validation de ADR-002, compilateur C++20, CMake et version/licence JUCE
 Critères de validation :
-- [NON VALIDÉ] build minimal Debug et Release sur Windows x64 : sources présentes, toolchain locale absente ;
-- [NON VALIDÉ] premier test automatisé exécuté : test CTest présent, compilation impossible localement ;
-- [PRÉSENT] formatage et avertissements stricts configurés ;
-- [NON VALIDÉ] CI verte : workflow Windows Debug/Release présent mais non exécuté ;
+- [VALIDÉ] build minimal Debug et Release sur Windows x64 : configurations (233,9 s / 196,1 s) et builds réussis (MSVC 19.44, /W4 /WX) ;
+- [VALIDÉ] premier test automatisé exécuté : CTest `common.strong_types` à 100 % en Debug et Release ;
+- [VALIDÉ] formatage et avertissements stricts configurés et contrôlés (clang-format dans la CI) ;
+- [VALIDÉ] CI verte : workflow Windows Debug/Release exécuté sur windows-2022 (run `ci` conclusion success) ;
 - [VALIDÉ] architecture, dépendances, sécurité, risques, suivi et état actuel mis à jour.
 
 Travail réalisé :
-- CMake 3.24+ et presets Windows x64 ;
-- application JUCE minimale ;
+- CMake 3.24+ et presets Windows x64 (schéma v5) ;
+- application JUCE minimale compilée et testée en Debug/Release ;
 - bibliothèque commune avec types forts `Seconds`, `Beats`, `Probability` et `Score01` ;
-- test unitaire des bornes et valeurs non finies ;
-- CI GitHub Actions Debug/Release ;
-- règles de formatage, avertissements et sécurité de téléchargement.
+- tests unitaires étendus (bornes, non finis, égalité/ordre, Score01, Beats) ;
+- CI GitHub Actions Debug/Release validée (windows-2022, timeout, contrôle clang-format) ;
+- règles de formatage, avertissements et sécurité de téléchargement ;
+- .gitattributes pour la normalisation des fins de ligne.
 
 Travail restant :
-- installer ou fournir Visual Studio 2022 Build Tools avec C++ et CMake ;
-- configurer, compiler et tester Debug puis Release ;
-- exécuter la CI et corriger tout échec réel ;
-- obtenir la décision du propriétaire sur AGPLv3 ou licence commerciale JUCE avant distribution.
+- fusionner la Pull Request #1 vers `main` ;
+- obtenir la décision du propriétaire sur AGPLv3 ou licence commerciale JUCE avant distribution (R-008).
