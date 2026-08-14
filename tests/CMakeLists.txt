@@ -1,0 +1,6 @@
+add_executable(VocalMelodyCommonTests unit/StrongTypesTests.cpp)
+
+target_link_libraries(VocalMelodyCommonTests PRIVATE VocalMelody::Common)
+vocalmelody_enable_warnings(VocalMelodyCommonTests)
+
+add_test(NAME common.strong_types COMMAND VocalMelodyCommonTests)
