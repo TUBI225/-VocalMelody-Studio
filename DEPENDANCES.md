@@ -35,7 +35,7 @@
 ## Capacités de codec et stratégie (ADR-006)
 
 - WAV PCM 16/24/32 bits : vérifié par tests automatiques.
-- MP3 : `minimp3` intégré et validé localement avec un vrai vecteur Layer III non silencieux ; corpus musical/utilisateur et CI du commit encore requis.
+- MP3 : `minimp3` intégré et validé localement et en CI avec un vrai vecteur Layer III non silencieux ; corpus musical/utilisateur encore requis.
 - M4A/AAC : non implémenté. `juce::WindowsMediaAudioFormat` dans JUCE 8.0.15 n'annonce pas `.m4a`, il ne suffit donc pas à établir ce support.
 - Le module `juce_cryptography` est lié pour calculer SHA-256 ; il fait partie de la même distribution JUCE 8.0.15 déjà épinglée.
 

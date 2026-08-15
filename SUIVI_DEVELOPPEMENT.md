@@ -905,3 +905,12 @@ Exécuter la validation audio interactive dans l'IHM et intégrer les décodeurs
 ## État
 
 MP3 est implémenté et validé localement en Debug/Release sur un vecteur réel, mais attend encore la CI et un corpus musical/utilisateur. M4A n'est pas implémenté. T-101 reste PARTIELLE.
+
+## Résultat CI après publication
+
+- Commit technique : `b89c053` (`feat(audio): ajoute le décodage MP3 vérifié`).
+- GitHub Actions : run `31886309639`, conclusion RÉUSSIE.
+- Windows x64 Debug : formatage, configuration, build et 6 tests réussis.
+- Windows x64 Release : formatage, configuration, build et 6 tests réussis.
+
+La preuve MP3 couvre désormais les builds locaux et la CI sur le vecteur Layer III épinglé. Le corpus musical/utilisateur, la lecture interactive et le M4A restent ouverts ; T-101 reste PARTIELLE.

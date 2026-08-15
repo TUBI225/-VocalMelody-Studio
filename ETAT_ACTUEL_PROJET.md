@@ -7,12 +7,12 @@
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend en cours)
 - Plateforme cible : Windows x64
 - Branche Git : `phase1/audio-frontend` (Pull Request #2 ouverte vers `main`)
-- Dernier commit poussé : `22a8e99` - docs: trace la ci checkout node 24
+- Dernier commit technique poussé : `b89c053` - feat(audio): ajoute le décodage MP3 vérifié
 - Dernière mise à jour : 2026-08-15 (T-101.8 MP3 en validation locale ; GitHub CLI 2.97.0 installé et authentifié)
 
 ## État général
 
-La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV réel, analyse mono, diagnostics, métadonnées JSON, transport de lecture et décodage MP3 sont implémentés. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. Le code local T-101.8 passe 6/6 tests en Debug et Release ainsi que le contrôle de formatage 28/28. La CI verte du commit poussé `22a8e99` ne couvre pas encore ces changements locaux.
+La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV réel, analyse mono, diagnostics, métadonnées JSON, transport de lecture et décodage MP3 sont implémentés. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. T-101.8 passe 6/6 tests en Debug et Release, le contrôle de formatage 28/28 et la CI Windows du commit `b89c053` (run `31886309639`).
 
 ## Tâches par statut
 
@@ -37,7 +37,7 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 
 ## Tâches en cours ou bloquées
 
-- T-101 : PARTIEL dans la Pull Request #2. La CI verte actuelle couvre le commit poussé précédent ; le nouveau code MP3 attend encore sa CI, un corpus musical/utilisateur et une validation interactive. M4A reste à concevoir.
+- T-101 : PARTIEL dans la Pull Request #2. Le nouveau code MP3 est vert en CI ; un corpus musical/utilisateur et une validation interactive restent nécessaires. M4A reste à concevoir.
 
 ## Erreurs et risques critiques
 
@@ -74,4 +74,4 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 
 ## Prochaine action recommandée
 
-Terminer la validation locale Debug/Release du décodeur MP3, pousser le changement et vérifier sa CI. Ensuite, tester un corpus musical/utilisateur, effectuer une validation manuelle de la lecture et choisir une stratégie M4A juridiquement et techniquement compatible. Avant la phase pitch, comparer le rééchantillonneur linéaire à une méthode avec filtrage anti-repliement.
+Tester un corpus musical/utilisateur MP3, effectuer une validation manuelle de la lecture et choisir une stratégie M4A juridiquement et techniquement compatible. Avant la phase pitch, comparer le rééchantillonneur linéaire à une méthode avec filtrage anti-repliement.

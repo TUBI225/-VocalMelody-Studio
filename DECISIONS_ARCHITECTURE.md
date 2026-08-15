@@ -81,7 +81,7 @@ Les décisions sont conservées dans l'ordre chronologique. Une décision rempla
   - **M4A / AAC** : décision non finalisée. Dans JUCE 8.0.15, `juce::WindowsMediaAudioFormat` n'annonce pas `.m4a`; un adaptateur Media Foundation dédié ou un autre codec audité reste nécessaire.
 - Justification MP3 : dépendance légère, version immuable, licence identifiée et tests automatisables sans dépendre d'un codec système. Ceci ne constitue pas une garantie juridique exhaustive.
 - Conséquences : WAV et MP3 disposent d'un chemin d'import ; M4A reste explicitement non implémenté. Les tests MP3 utilisent un vecteur Layer III réel fourni par la dépendance épinglée.
-- Risques : corpus musical/utilisateur MP3 et CI du nouveau code encore à valider ; stratégie M4A, redistribution et environnements Windows N/KN à auditer avant toute annonce de support.
+- Risques : corpus musical/utilisateur MP3 encore à valider ; stratégie M4A, redistribution et environnements Windows N/KN à auditer avant toute annonce de support. La CI du code MP3 est verte sur `b89c053`.
 - Condition de révision : exigence de portabilité macOS/Linux nécessitant une abstraction décodeur AAC multi-plateforme.
 
 ## ADR-007 - Sample rate canonique d'analyse à 16 kHz
