@@ -6,7 +6,7 @@
 namespace vocalmelody::common {
 
 double frequencyHzToMidi(const double frequencyHz) noexcept {
-    if (frequencyHz <= 0.0) {
+    if (!std::isfinite(frequencyHz) || frequencyHz <= 0.0) {
         return 0.0;
     }
     return 69.0 + 12.0 * std::log2(frequencyHz / 440.0);

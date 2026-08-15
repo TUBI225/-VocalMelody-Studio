@@ -4,6 +4,7 @@
 #include "TestContext.h"
 
 #include <cmath>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,26 @@ void testSine440(TestContext& context) {
     context.expect(frames.front().voicedProbability().value() > 0.5, "a clean sine is voiced");
 }
 
+void testFrequencyRangeBoundaries(TestContext& context) {
+    using vocalmelody::pitch::AutocorrelationPitchEstimator;
+    using vocalmelody::pitch::MonoSignal;
+
+    const AutocorrelationPitchEstimator estimator;
+    for (const double expectedHz : {AutocorrelationPitchEstimator::kMinFrequencyHz,
+                                    AutocorrelationPitchEstimator::kMaxFrequencyHz}) {
+        const MonoSignal signal{makeSine(16000, expectedHz, 1.0), 16000};
+        const auto frames = estimator.estimate(signal);
+        context.expect(!frames.empty(), "a boundary frequency produces pitch frames (expected=" +
+                                            std::to_string(expectedHz) + " Hz)");
+        if (!frames.empty()) {
+            context.expect(
+                std::abs(frames.front().frequencyHz() - expectedHz) < 1.0,
+                "the frequency range boundary is detected (expected=" + std::to_string(expectedHz) +
+                    ", detected=" + std::to_string(frames.front().frequencyHz()) + " Hz)");
+        }
+    }
+}
+
 void testEmptySignal(TestContext& context) {
     using vocalmelody::pitch::AutocorrelationPitchEstimator;
     using vocalmelody::pitch::MonoSignal;
@@ -60,6 +81,9 @@ void testEmptySignal(TestContext& context) {
                    "an empty signal produces no frames");
     context.expect(estimator.estimate(MonoSignal{{0.5F}, 0}).empty(),
                    "an invalid sample rate produces no frames");
+    context.expect(
+        estimator.estimate(MonoSignal{{0.5F, -0.5F}, std::numeric_limits<int>::max()}).empty(),
+        "a sample rate requiring lags beyond the frame is rejected without allocation growth");
 }
 
 void testInterfaceUsage(TestContext& context) {
@@ -84,6 +108,7 @@ int main() {
     TestContext context;
     testInterfaceId(context);
     testSine440(context);
+    testFrequencyRangeBoundaries(context);
     testEmptySignal(context);
     testInterfaceUsage(context);
     return context.result();

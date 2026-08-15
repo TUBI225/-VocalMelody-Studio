@@ -32,7 +32,10 @@ AutocorrelationPitchEstimator::estimate(const MonoSignal& signal) const {
     const double minLag = std::ceil(static_cast<double>(signal.sampleRate) / kMaxFrequencyHz);
     const double maxLag = std::floor(static_cast<double>(signal.sampleRate) / kMinFrequencyHz);
     const int minLagI = static_cast<int>(std::max(2.0, minLag));
-    const int maxLagI = static_cast<int>(std::max(static_cast<double>(minLagI + 1), maxLag));
+    const int maxLagI = static_cast<int>(maxLag);
+    if (maxLagI < minLagI) {
+        return frames;
+    }
 
     for (std::size_t start = 0; start < signal.samples.size(); start += kDefaultHopSize) {
         const double timeSeconds =
@@ -59,13 +62,19 @@ AutocorrelationPitchEstimator::estimateFrame(const std::vector<float>& frame, co
         return std::nullopt;
     }
 
-    std::vector<double> correlations(static_cast<std::size_t>(maxLag + 1), 0.0);
-    for (int lag = minLag; lag <= maxLag; ++lag) {
-        const std::size_t lagIndex = static_cast<std::size_t>(lag);
-        if (lagIndex >= frame.size()) {
-            break;
-        }
+    if (frame.size() < 3U || minLag < 2) {
+        return std::nullopt;
+    }
+    const int effectiveMaxLag = std::min(maxLag, static_cast<int>(frame.size() - 2U));
+    if (effectiveMaxLag < minLag) {
+        return std::nullopt;
+    }
 
+    const int comparisonMinLag = minLag - 1;
+    const int comparisonMaxLag = effectiveMaxLag + 1;
+    std::vector<double> correlations(static_cast<std::size_t>(comparisonMaxLag + 1), 0.0);
+    for (int lag = comparisonMinLag; lag <= comparisonMaxLag; ++lag) {
+        const std::size_t lagIndex = static_cast<std::size_t>(lag);
         double sum = 0.0;
         double normCurrent = 0.0;
         double normDelayed = 0.0;
@@ -85,11 +94,12 @@ AutocorrelationPitchEstimator::estimateFrame(const std::vector<float>& frame, co
     // peak instead would bias toward sub-harmonics (classic autocorrelation issue).
     int bestLag = 0;
     double bestCorrelation = 0.0;
-    for (int lag = minLag + 1; lag < maxLag; ++lag) {
+    for (int lag = minLag; lag <= effectiveMaxLag; ++lag) {
         const std::size_t lagIndex = static_cast<std::size_t>(lag);
         const double current = correlations[lagIndex];
-        if (current >= kAutocorrelationThreshold && current > correlations[lagIndex - 1U] &&
-            current >= correlations[lagIndex + 1U]) {
+        const double previous = correlations[lagIndex - 1U];
+        const double next = correlations[lagIndex + 1U];
+        if (current >= kAutocorrelationThreshold && current > previous && current >= next) {
             bestLag = lag;
             bestCorrelation = current;
             break;

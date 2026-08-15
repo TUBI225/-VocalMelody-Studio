@@ -14,6 +14,12 @@ void testFrequencyToMidi(TestContext& context) {
                    "A4 at 440 Hz maps to MIDI 69");
     context.expect(vocalmelody::common::frequencyHzToMidi(0.0) == 0.0,
                    "non-positive frequency maps to zero");
+    context.expect(
+        vocalmelody::common::frequencyHzToMidi(std::numeric_limits<double>::quiet_NaN()) == 0.0,
+        "NaN frequency maps to zero");
+    context.expect(
+        vocalmelody::common::frequencyHzToMidi(std::numeric_limits<double>::infinity()) == 0.0,
+        "infinite frequency maps to zero");
 }
 
 void testPitchFrame(TestContext& context) {

@@ -1746,12 +1746,12 @@ Interface unique (architecture §10), module `src/pitch` indépendant de JUCE :
 
 - `IPitchEstimator` : `estimate(MonoSignal) -> std::vector<PitchFrame>` et `id()` ;
 - `MonoSignal` : `{ samples mono, sampleRate }` ;
-- baseline `AutocorrelationPitchEstimator` (fenêtre 2048, hop 1024, plage 80-2000 Hz) : premier pic local de l'autocorrélation normalisée au-dessus du seuil de voicing 0,8, pour éviter le biais sous-harmonique du pic global.
+- baseline `AutocorrelationPitchEstimator` (fenêtre 2048, hop 1024, plage inclusive 80-2000 Hz) : premier pic local de l'autocorrélation normalisée au-dessus du seuil de voicing 0,8, pour éviter le biais sous-harmonique du pic global. T-102.1 calcule un voisin de comparaison de part et d'autre de la plage et borne le stockage des corrélations à la fenêtre.
 
 Validation :
 
 - Test CTest `pitch.structures` : RÉUSSI (bornes des structures, `frequencyHzToMidi`, `MidiPitch`, `Cents`).
-- Test CTest `pitch.autocorrelation` : RÉUSSI (sinus 440 Hz à 16 kHz détecté dans ±10 Hz, signal vide, sample rate invalide, usage via l'interface).
+- Test CTest `pitch.autocorrelation` : RÉUSSI (sinus 440 Hz à 16 kHz détecté dans ±10 Hz, bornes 80/2000 Hz, signal vide, sample rate invalide, usage via l'interface).
 - Build Debug : réussi, aucun avertissement ; CTest global 8/8 ; clang-format 35/35.
 
 Limites du socle (le benchmark reste à faire, feuille de route phase 2) :
