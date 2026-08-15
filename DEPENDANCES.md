@@ -18,6 +18,9 @@
 | clang-format | 19.1.5 (LLVM fourni par VS 2022) | Formatage selon `.clang-format` | Présent | Apache-2.0 with LLVM exceptions / https://clang.llvm.org/ |
 | MSVC Build Tools | Visual Studio 2022, MSVC 19.44.35207 | Compilation Windows x64 | Présent | Microsoft / https://visualstudio.microsoft.com/visual-cpp-build-tools/ |
 | Ninja | Fourni par VS 2022 | Générateur de build optionnel | Présent | Apache-2.0 / https://ninja-build.org/ |
+| Git | 2.55.0.windows.4 | Versionnement, branches et push | Présent dans le PATH | GPLv2 / https://git-scm.com/ |
+| clang-tidy | 19.1.5 (LLVM fourni par VS 2022) | Analyse statique future | Présent dans Visual Studio, absent du PATH | Apache-2.0 with LLVM exceptions / https://clang.llvm.org/extra/clang-tidy/ |
+| GitHub CLI (`gh`) | 2.97.0 | Gestion locale des Pull Requests, authentification et Actions | Présent dans `C:\Program Files\GitHub CLI`, compte `TUBI225` authentifié | MIT / https://cli.github.com/ |
 
 ## Dépendances futures non installées
 
@@ -26,6 +29,14 @@
 | ONNX Runtime | À déterminer | Inférence ML CPU | Facultatif / non ajouté | MIT | Taille, redistribution, backend CPU et performances |
 | SQLite | À déterminer | Index, cache et projets | Facultatif / non ajouté | Domaine public | Schéma, migrations et stratégie d'écriture atomique |
 | Python | À déterminer | Prototypes et benchmarks isolés | Facultatif / non ajouté au produit | PSF | Isolation stricte du cœur final |
+| Codec M4A/MP3 Windows | À déterminer (Media Foundation, FFmpeg ou alternative) | Décodage garanti des formats phase 1 | Manquant / décision ADR-006 | À auditer selon option | Licence, redistribution, sécurité, maintenance et corpus réel |
+
+## Capacités de codec réellement vérifiées
+
+- WAV PCM 16 bits : vérifié par tests automatiques.
+- MP3 : format potentiellement fourni par Windows Media dans JUCE sous Windows, mais aucun fichier réel n'a été testé.
+- M4A/AAC : non garanti par `juce::AudioFormatManager::registerBasicFormats()` sous Windows dans la configuration actuelle ; FFmpeg n'est pas installé.
+- Le module `juce_cryptography` est maintenant lié pour calculer SHA-256 ; il fait partie de la même distribution JUCE 8.0.15 déjà épinglée.
 
 ## Décision de licence à obtenir
 

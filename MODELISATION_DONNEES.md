@@ -1703,3 +1703,25 @@ Reste à implémenter (phase 1) :
 - Décodage et import réels de fichiers WAV/MP3/M4A (adossé à JUCE `juce_audio_formats`).
 - Lecture audio et production de la version mono d'analyse.
 - Alimentation réelle de `AudioAnalysisResult` (durée, sample rate, canaux, diagnostics).
+
+======================================================================
+99. ETAT D'IMPLEMENTATION - IMPORT ET METADONNEES T-101.4
+======================================================================
+
+Date : 2026-08-14
+
+La présente section actualise la section 98 :
+
+- `AudioSource` est alimentée par l'import WAV réel ; `id` vaut `audio-<sha256>` et `fileHash` contient les 64 chiffres hexadécimaux SHA-256 du contenu.
+- `importedAt` est un horodatage ISO 8601 généré au moment de l'import, et non une date fixe.
+- `AudioAnalysisResult` reçoit durée, sample rate, clipping, bruit approximatif, présence vocale, qualité et carte de silence.
+- Les métadonnées sont sérialisables en JSON ; les nombres non finis sont écrits `null` pour préserver un JSON valide.
+- Le fichier est haché avant et après décodage ; l'import échoue si le contenu change entre les deux lectures.
+
+Limites de modèle encore ouvertes :
+
+- `monoAnalysisPath` reste vide car aucun artefact mono persistant n'est encore produit ;
+- `analysisSampleRate` vaut désormais 16 000 Hz ; `analysisVersion` passe à 2 pour distinguer les résultats rééchantillonnés des métadonnées antérieures ;
+- `warnings` n'est pas encore alimenté ;
+- `AudioFormat::M4a` exprime un format visé, pas une preuve que le codec est disponible sous Windows ;
+- le schéma JSON n'a pas encore de numéro de version racine ni de migration ; il ne doit donc pas être considéré comme format projet stable.

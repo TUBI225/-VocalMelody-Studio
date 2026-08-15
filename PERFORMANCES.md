@@ -29,7 +29,7 @@
 
 ## Journal des mesures
 
-Aucune mesure exécutée. Une amélioration ne pourra être déclarée qu'avec une comparaison avant/après reproductible.
+Des mesures de build et de tests existent ci-dessous. Les performances d'import, de mémoire et d'interface restent non mesurées ; aucune amélioration applicative ne peut être déclarée sans protocole reproductible.
 
 ## Environnement observé le 2026-08-14
 
@@ -49,3 +49,22 @@ Aucune mesure exécutée. Une amélioration ne pourra être déclarée qu'avec u
 - Temps de démarrage de l'application : NON MESURÉ, binaire non exécuté interactivement.
 
 Ces mesures sont indicatives : la configuration initiale de JUCE inclut la construction de l'outil `juceaide`. Les mesures de compilation devront être refaites sur un build propre et chronométré pour être comparables.
+
+## Mesures T-101.4
+
+- Machine : environnement observé ci-dessus, build incrémental après ajout de `juce_cryptography`.
+- CTest Debug final : 4,25 s, 5/5 tests réussis.
+- CTest Release final : 2,26 s, 5/5 tests réussis.
+- Build Release incrémental final : 9,3 s avec `--parallel 2`, tests et contrôle de formatage inclus dans la commande complète ; le premier rebuild de JUCE cryptography a dépassé 5 minutes et n'est pas une mesure propre exploitable.
+- Corpus automatisé le plus long : WAV mono 30 s à 8 kHz ; aucune mesure isolée du temps d'import ni du pic mémoire.
+
+Interprétation : ces chiffres prouvent l'exécution des tests, pas la performance du produit. L'import charge actuellement le signal décodé complet puis une copie mono ; le plafond de 30 millions de trames limite le risque mais ne remplace pas une analyse par blocs et un benchmark mémoire.
+
+## Mesures T-101.5
+
+- Rééchantillonnage d'analyse : fréquence cible 16 kHz, interpolation linéaire, plafond interne 100 millions de trames de sortie.
+- CTest Debug final (`analysisVersion=2`) : 5/5, 3,74 s.
+- CTest Release final : 5/5, 1,69 s.
+- Temps et mémoire du rééchantillonnage isolé : NON MESURÉS.
+
+Ces résultats valident le comportement fonctionnel testé, pas la qualité spectrale. Un benchmark anti-repliement, précision et coût CPU est requis avant d'utiliser cette baseline pour le pitch.

@@ -31,7 +31,7 @@ class AudioAnalysisResult final {
            const std::string& monoAnalysisPath, const Score01& clippingScore,
            const Score01& noiseScore, const Score01& voicePresenceScore,
            std::vector<SilenceSegment> silenceMap, const Score01& qualityScore,
-           std::vector<std::string> warnings) noexcept;
+           std::vector<std::string> warnings);
 
     [[nodiscard]] const std::string& audioSourceId() const noexcept { return audioSourceId_; }
     [[nodiscard]] int analysisVersion() const noexcept { return analysisVersion_; }

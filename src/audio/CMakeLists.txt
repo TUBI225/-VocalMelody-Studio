@@ -17,6 +17,7 @@ target_link_libraries(
         VocalMelody::Frontend
         juce::juce_audio_formats
         juce::juce_audio_basics
+        juce::juce_cryptography
 )
 
 target_compile_features(vocalmelody_audio PUBLIC cxx_std_20)

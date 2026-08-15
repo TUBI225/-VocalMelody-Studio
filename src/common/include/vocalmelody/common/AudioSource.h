@@ -15,7 +15,7 @@ enum class AudioFormat {
     M4a,
 };
 
-[[nodiscard]] AudioFormat audioFormatFromExtension(const std::string_view extension) noexcept;
+[[nodiscard]] AudioFormat audioFormatFromExtension(const std::string_view extension);
 [[nodiscard]] std::string_view audioFormatToString(const AudioFormat format) noexcept;
 
 class AudioSource final {
@@ -23,8 +23,7 @@ class AudioSource final {
     [[nodiscard]] static std::optional<AudioSource>
     create(const std::string& id, const std::string& originalPath, const std::string& importedAt,
            const AudioFormat originalFormat, const int sampleRate, const int channelCount,
-           const int bitDepth, const Seconds& durationSeconds,
-           const std::string& fileHash) noexcept;
+           const int bitDepth, const Seconds& durationSeconds, const std::string& fileHash);
 
     [[nodiscard]] const std::string& id() const noexcept { return id_; }
     [[nodiscard]] const std::string& originalPath() const noexcept { return originalPath_; }

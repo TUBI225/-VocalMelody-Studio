@@ -28,7 +28,12 @@ MainComponent::MainComponent() {
     playButton_.setEnabled(false);
     addAndMakeVisible(playButton_);
 
-    deviceManager_.initialiseWithDefaultDevices(0, 2);
+    const auto deviceError = deviceManager_.initialiseWithDefaultDevices(0, 2);
+    audioDeviceReady_ = deviceError.isEmpty();
+    if (!audioDeviceReady_) {
+        statusLabel_.setText("Périphérique audio indisponible : analyse seule.",
+                             juce::dontSendNotification);
+    }
     sourcePlayer_.setSource(&transportSource_);
     deviceManager_.addAudioCallback(&sourcePlayer_);
 
@@ -63,12 +68,16 @@ void MainComponent::chooseFileToImport() {
     fileChooser_ = std::make_unique<juce::FileChooser>(
         "Choisir un fichier audio", juce::File::getSpecialLocation(juce::File::userHomeDirectory),
         "*.wav;*.mp3;*.m4a");
+    juce::Component::SafePointer<MainComponent> safeThis(this);
     fileChooser_->launchAsync(juce::FileBrowserComponent::openMode |
                                   juce::FileBrowserComponent::canSelectFiles,
-                              [this](const juce::FileChooser& chooser) {
+                              [safeThis](const juce::FileChooser& chooser) {
+                                  if (safeThis == nullptr) {
+                                      return;
+                                  }
                                   const auto file = chooser.getResult();
                                   if (file != juce::File()) {
-                                      loadFile(file);
+                                      safeThis->loadFile(file);
                                   }
                               });
 }
@@ -96,8 +105,9 @@ void MainComponent::loadFile(const juce::File& file) {
         readerSource_.get(), 0, nullptr, readerSource_->getAudioFormatReader()->sampleRate,
         static_cast<int>(readerSource_->getAudioFormatReader()->numChannels));
     playButton_.setButtonText("Lecture");
-    playButton_.setEnabled(true);
-    statusLabel_.setText("Fichier chargé.", juce::dontSendNotification);
+    playButton_.setEnabled(audioDeviceReady_);
+    statusLabel_.setText(audioDeviceReady_ ? "Fichier chargé." : "Fichier analysé sans lecture.",
+                         juce::dontSendNotification);
 
     const auto& source = importResult->source;
     const auto& analysis = importResult->analysis;
@@ -116,6 +126,9 @@ void MainComponent::loadFile(const juce::File& file) {
 }
 
 void MainComponent::togglePlayback() {
+    if (!audioDeviceReady_ || readerSource_ == nullptr) {
+        return;
+    }
     if (transportSource_.isPlaying()) {
         transportSource_.stop();
         playButton_.setButtonText("Lecture");

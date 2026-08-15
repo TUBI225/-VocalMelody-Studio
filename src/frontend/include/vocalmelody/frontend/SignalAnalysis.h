@@ -19,12 +19,15 @@ struct SignalStats final {
                                                        const int sampleRate) noexcept;
 
 [[nodiscard]] std::vector<common::SilenceSegment>
-detectSilenceSegments(const std::span<const float> monoFrames, const int sampleRate) noexcept;
+detectSilenceSegments(const std::span<const float> monoFrames, const int sampleRate);
 
 [[nodiscard]] std::optional<float>
 estimateNoiseFloor(const std::span<const float> monoFrames) noexcept;
 
 [[nodiscard]] std::vector<float> downmixToMono(const std::span<const float> left,
-                                               const std::span<const float> right) noexcept;
+                                               const std::span<const float> right);
+
+[[nodiscard]] std::optional<std::vector<float>>
+resampleLinear(const std::span<const float> input, int sourceSampleRate, int targetSampleRate);
 
 } // namespace vocalmelody::frontend

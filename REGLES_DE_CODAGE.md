@@ -23,6 +23,7 @@
 
 - Valider toute entrée externe avant traitement, notamment formats audio, chemins et données persistantes.
 - Retourner une erreur explicite ; ne jamais continuer avec des données possiblement corrompues.
+- Ne pas marquer `noexcept` une fonction qui alloue sans intercepter les exceptions ; une frontière d'import doit convertir les échecs de codec ou d'allocation en erreur contrôlée.
 - Ne pas journaliser de secrets ni de contenu utilisateur inutile.
 - Les opérations longues et fichiers temporaires doivent prévoir nettoyage, interruption et reprise.
 
@@ -37,6 +38,9 @@
 - La CI traite les avertissements comme des erreurs ; ce mode reste optionnel localement.
 - Les tests ne doivent pas dépendre de JUCE lorsqu'ils vérifient uniquement le domaine commun.
 - Toute nouvelle convention doit faire l'objet d'une mise à jour de ce document.
+- Un sérialiseur JSON doit produire des jetons valides pour toute entrée ; NaN et les infinis sont rejetés ou sérialisés en `null`.
+- Un format audio est « pris en charge » uniquement après test du codec réellement activé sur la plateforme cible ; une extension dans l'interface ne constitue pas une preuve.
+- Toute modification de l'algorithme ou du sample rate qui change la signification d'un résultat persistant doit incrémenter `analysisVersion` et ajouter un test de sérialisation.
 
 ## Règles CMake et dépendances
 

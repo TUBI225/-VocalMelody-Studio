@@ -7,7 +7,7 @@
 
 namespace vocalmelody::common {
 
-AudioFormat audioFormatFromExtension(const std::string_view extension) noexcept {
+AudioFormat audioFormatFromExtension(const std::string_view extension) {
     if (extension.empty()) {
         return AudioFormat::Unknown;
     }
@@ -54,7 +54,7 @@ std::optional<AudioSource>
 AudioSource::create(const std::string& id, const std::string& originalPath,
                     const std::string& importedAt, const AudioFormat originalFormat,
                     const int sampleRate, const int channelCount, const int bitDepth,
-                    const Seconds& durationSeconds, const std::string& fileHash) noexcept {
+                    const Seconds& durationSeconds, const std::string& fileHash) {
     if (id.empty() || originalPath.empty() || importedAt.empty() || fileHash.empty()) {
         return std::nullopt;
     }

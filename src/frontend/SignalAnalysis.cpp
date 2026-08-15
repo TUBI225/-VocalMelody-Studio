@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace vocalmelody::frontend {
 namespace {
@@ -9,6 +10,7 @@ namespace {
 constexpr float kSilenceAmplitude = 0.001F;
 constexpr float kClippingAmplitude = 0.99F;
 constexpr std::size_t kMinSilenceRun = 2;
+constexpr std::size_t kMaxResampledFrames = 100'000'000;
 
 [[nodiscard]] float square(const float value) noexcept { return value * value; }
 
@@ -46,7 +48,7 @@ std::optional<SignalStats> analyzeSignal(const std::span<const float> monoFrames
 }
 
 std::vector<common::SilenceSegment> detectSilenceSegments(const std::span<const float> monoFrames,
-                                                          const int sampleRate) noexcept {
+                                                          const int sampleRate) {
     std::vector<common::SilenceSegment> segments;
     if (monoFrames.empty() || sampleRate <= 0) {
         return segments;
@@ -103,7 +105,7 @@ std::optional<float> estimateNoiseFloor(const std::span<const float> monoFrames)
 }
 
 std::vector<float> downmixToMono(const std::span<const float> left,
-                                 const std::span<const float> right) noexcept {
+                                 const std::span<const float> right) {
     if (left.size() != right.size()) {
         return {};
     }
@@ -115,6 +117,45 @@ std::vector<float> downmixToMono(const std::span<const float> left,
         mono.push_back(static_cast<float>(average));
     }
     return mono;
+}
+
+std::optional<std::vector<float>> resampleLinear(const std::span<const float> input,
+                                                 const int sourceSampleRate,
+                                                 const int targetSampleRate) {
+    if (input.empty() || sourceSampleRate <= 0 || targetSampleRate <= 0) {
+        return std::nullopt;
+    }
+    if (sourceSampleRate == targetSampleRate) {
+        return std::vector<float>(input.begin(), input.end());
+    }
+
+    const long double exactOutputSize = static_cast<long double>(input.size()) *
+                                        static_cast<long double>(targetSampleRate) /
+                                        static_cast<long double>(sourceSampleRate);
+    if (!std::isfinite(exactOutputSize) || exactOutputSize <= 0.0L ||
+        exactOutputSize > static_cast<long double>(kMaxResampledFrames) ||
+        exactOutputSize > static_cast<long double>(std::numeric_limits<std::size_t>::max())) {
+        return std::nullopt;
+    }
+
+    const auto outputSize =
+        std::max<std::size_t>(1, static_cast<std::size_t>(std::llround(exactOutputSize)));
+    std::vector<float> output(outputSize);
+    const double sourceStep =
+        static_cast<double>(sourceSampleRate) / static_cast<double>(targetSampleRate);
+
+    for (std::size_t outputIndex = 0; outputIndex < outputSize; ++outputIndex) {
+        const double sourcePosition = static_cast<double>(outputIndex) * sourceStep;
+        const auto lowerIndex =
+            std::min(static_cast<std::size_t>(sourcePosition), input.size() - 1);
+        const auto upperIndex = std::min(lowerIndex + 1, input.size() - 1);
+        const double fraction = sourcePosition - static_cast<double>(lowerIndex);
+        output[outputIndex] =
+            static_cast<float>(static_cast<double>(input[lowerIndex]) * (1.0 - fraction) +
+                               static_cast<double>(input[upperIndex]) * fraction);
+    }
+
+    return output;
 }
 
 } // namespace vocalmelody::frontend

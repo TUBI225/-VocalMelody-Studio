@@ -1,5 +1,6 @@
 #include <vocalmelody/common/JsonWriter.h>
 
+#include <cmath>
 #include <cstdio>
 
 namespace vocalmelody::common {
@@ -47,6 +48,10 @@ void JsonWriter::value(const int value) {
 }
 
 void JsonWriter::value(const double value) {
+    if (!std::isfinite(value)) {
+        valueNull();
+        return;
+    }
     writeSeparator();
     out_ += std::to_string(value);
 }

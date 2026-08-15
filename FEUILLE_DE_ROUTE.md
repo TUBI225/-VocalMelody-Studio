@@ -1232,5 +1232,28 @@ Travail réalisé :
 - .gitattributes pour la normalisation des fins de ligne.
 
 Travail restant :
-- fusionner la Pull Request #1 vers `main` ;
 - obtenir la décision du propriétaire sur AGPLv3 ou licence commerciale JUCE avant distribution (R-008).
+
+T-101 - Implémenter l'Audio Frontend
+Statut : PARTIEL
+Priorité : CRITIQUE
+Dépendances : T-001 terminée, JUCE 8.0.15, décision de codec M4A/MP3 encore ouverte
+Critères de validation :
+- [VALIDÉ] import WAV, mono et stéréo, sample rates différents ;
+- [VALIDÉ] détection durée, silence, clipping, niveau et bruit approximatif ;
+- [VALIDÉ] métadonnées JSON et preuve que l'original n'est pas modifié pendant les tests ;
+- [VALIDÉ] fichiers WAV vide, une trame, 30 secondes, multicanal et tronqué sans crash ;
+- [VALIDÉ] builds et CTest locaux Debug/Release, 5/5 tests ;
+- [VALIDÉ SUR `58e96e7`] CI Pull Request #2 verte ;
+- [À VALIDER APRÈS PUSH] CI des corrections T-101.4 ;
+- [NON VALIDÉ] corpus MP3 réel ;
+- [NON IMPLÉMENTÉ/GARANTI] décodage M4A Windows ;
+- [VALIDÉ COMME BASELINE] rééchantillonnage mono linéaire à 16 kHz, borné et testé ; qualité pitch/anti-repliement non validée ;
+- [NON EXÉCUTÉ] lecture interactive sur périphérique audio réel.
+
+Travail restant :
+- choisir et auditer la stratégie de codec MP3/M4A (Media Foundation adapté, FFmpeg ou autre) ;
+- remplacer ou valider la baseline de rééchantillonnage par benchmark avec anti-repliement et implémenter l'analyse par blocs pour les fichiers longs ;
+- exposer des erreurs d'import détaillées à l'interface ;
+- exécuter le corpus réel et la validation manuelle de lecture ;
+- pousser T-101.4 et confirmer la CI avant de déclarer la phase 1 terminée.

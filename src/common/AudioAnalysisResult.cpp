@@ -21,7 +21,7 @@ AudioAnalysisResult::create(const std::string& audioSourceId, const int analysis
                             const std::string& monoAnalysisPath, const Score01& clippingScore,
                             const Score01& noiseScore, const Score01& voicePresenceScore,
                             std::vector<SilenceSegment> silenceMap, const Score01& qualityScore,
-                            std::vector<std::string> warnings) noexcept {
+                            std::vector<std::string> warnings) {
     if (audioSourceId.empty() || analysisVersion < 0 || analysisSampleRate <= 0) {
         return std::nullopt;
     }

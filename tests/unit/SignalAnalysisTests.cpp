@@ -119,6 +119,33 @@ void testDownmix(TestContext& context) {
                    "mismatched channel lengths are rejected");
 }
 
+void testResampleLinear(TestContext& context) {
+    using vocalmelody::frontend::resampleLinear;
+
+    const std::vector<float> input = {0.0F, 1.0F};
+    const auto upsampled = resampleLinear(input, 2, 4);
+    context.expect(upsampled.has_value() && upsampled->size() == 4,
+                   "upsampling produces the duration-equivalent frame count");
+    if (upsampled.has_value() && upsampled->size() == 4) {
+        context.expect(std::abs((*upsampled)[0] - 0.0F) < 1e-6F,
+                       "upsampling preserves the first frame");
+        context.expect(std::abs((*upsampled)[1] - 0.5F) < 1e-6F,
+                       "upsampling interpolates between frames");
+        context.expect(std::abs((*upsampled)[2] - 1.0F) < 1e-6F,
+                       "upsampling reaches the second frame");
+    }
+
+    const auto unchanged = resampleLinear(input, 16000, 16000);
+    context.expect(unchanged.has_value() && *unchanged == input,
+                   "equal sample rates preserve the input frames");
+    context.expect(!resampleLinear({}, 44100, 16000).has_value(),
+                   "an empty signal cannot be resampled");
+    context.expect(!resampleLinear(input, 0, 16000).has_value(),
+                   "an invalid source sample rate is rejected");
+    context.expect(!resampleLinear(input, 44100, 0).has_value(),
+                   "an invalid target sample rate is rejected");
+}
+
 } // namespace
 
 int main() {
@@ -130,5 +157,6 @@ int main() {
     testDetectSilenceSegments(context);
     testEstimateNoiseFloor(context);
     testDownmix(context);
+    testResampleLinear(context);
     return context.result();
 }

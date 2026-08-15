@@ -33,6 +33,7 @@ class MainComponent final : public juce::Component {
     juce::AudioTransportSource transportSource_;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource_;
     std::unique_ptr<juce::FileChooser> fileChooser_;
+    bool audioDeviceReady_{false};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

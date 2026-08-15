@@ -26,7 +26,7 @@ Les décisions sont conservées dans l'ordre chronologique. Une décision rempla
 - Avantages : audio et MIDI natifs, performances, multithreading, possibilité de VST future.
 - Inconvénients : chaîne de compilation plus lourde et complexité C++.
 - Conséquences : structure CMake, application JUCE et CI Windows créées ; le code de domaine reste indépendant de JUCE.
-- Risques : JUCE est proposé sous AGPLv3 ou licence commerciale. Le propriétaire doit choisir un régime compatible avant toute distribution ; la compilation locale reste à valider.
+- Risques : JUCE est proposé sous AGPLv3 ou licence commerciale. Le propriétaire doit choisir un régime compatible avant toute distribution. La compilation locale et la CI sont validées ; la disponibilité des codecs MP3/M4A reste distincte de cette validation.
 - Condition de révision : benchmark ou contrainte de distribution défavorable.
 
 ## ADR-004 - Acquisition reproductible de JUCE
@@ -54,3 +54,36 @@ Les décisions sont conservées dans l'ordre chronologique. Une décision rempla
 - Conséquences : tout format persistant devra être versionné et migrable.
 - Risques : divergence de schéma et incompatibilité descendante.
 - Condition de révision : prototypes de volume, performance et migration.
+
+## ADR-005 - Séparer décodage JUCE et analyse de signal pure
+
+- Date : 2026-08-14
+- Statut : ACCEPTÉE
+- Problème : tester les diagnostics audio sans coupler le domaine aux codecs et à l'interface JUCE.
+- Options étudiées : analyse directement dans l'interface ; module audio JUCE unique ; séparation `audio`/`frontend`/`common`.
+- Choix retenu : `src/audio` décode et adapte les fichiers, `src/frontend` analyse des trames mono sans JUCE, `src/common` porte les structures et la sérialisation générique.
+- Justification : tests rapides du domaine, codecs remplaçables et dépendances visibles.
+- Conséquences : le décodeur peut être remplacé ou complété pour M4A sans réécrire l'analyse ; les tests de signal restent indépendants de JUCE.
+- Risques : copie actuelle du signal complet en mémoire et double lecture pour le SHA-256 ; une API par blocs sera nécessaire pour les fichiers longs.
+- Condition de révision : mesures montrant que les copies ou frontières de modules empêchent d'atteindre les budgets de performance.
+
+## ADR-006 - Codec M4A/MP3 Windows
+
+- Date : 2026-08-14
+- Statut : PROPOSÉE - DÉCISION REQUISE
+- Problème : `registerBasicFormats()` couvre WAV ; le MP3 dépend du codec Windows Media et M4A n'est pas garanti par la configuration JUCE Windows actuelle.
+- Options à comparer : adaptation Windows Media Foundation ; FFmpeg/libavcodec ; autre bibliothèque décodage seule ; réduction temporaire des formats annoncés.
+- Critères : licence et redistribution commerciale, maintenance, codecs réellement couverts, sécurité sur fichiers malformés, taille, fonctionnement hors ligne et tests corpus.
+- Décision provisoire : ne pas annoncer MP3/M4A comme validés et ne pas ajouter FFmpeg sans audit de licence et prototype mesuré.
+- Condition de clôture : corpus réel reproductible et décision de licence documentée.
+
+## ADR-007 - Sample rate canonique d'analyse à 16 kHz
+
+- Date : 2026-08-14
+- Statut : ACCEPTÉE COMME BASELINE, À RÉÉVALUER AVANT LA PHASE PITCH
+- Problème : les diagnostics doivent recevoir une fréquence d'échantillonnage stable malgré des sources WAV différentes.
+- Choix provisoire : downmix de tous les canaux puis interpolation linéaire bornée vers 16 kHz ; le clipping reste mesuré sur les trames source pour ne pas masquer les pics.
+- Justification : implémentation pure, déterministe, testable sans JUCE et suffisante pour stabiliser les diagnostics de phase 1.
+- Limites : absence de filtre anti-repliement lors du sous-échantillonnage ; qualité non démontrée pour l'estimation de pitch.
+- Conséquences : `analysisSampleRate=16000` et `analysisVersion=2` ; toute métadonnée version 1 reste distinguable.
+- Condition de révision : benchmark avant phase 2 contre un rééchantillonneur à filtrage polyphasé/sinc ou une solution JUCE validée.

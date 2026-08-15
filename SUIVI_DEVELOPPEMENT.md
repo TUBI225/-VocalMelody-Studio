@@ -750,3 +750,87 @@ PARTIEL - corpus de tests d'intégration et métadonnées JSON en place ; valida
 - Corpus réel (MP3/M4A, fichiers longs, corrompus).
 - Validation Release et CI (run à suivre).
 
+# 2026-08-14 - T-101.4 - Audit, durcissement de l'import et validation Debug/Release
+
+## Objectif
+
+Vérifier l'état réel de la branche et de la CI, corriger les défauts observables de l'import audio, étendre le corpus demandé par la feuille de route et remettre les documents permanents en cohérence sans présenter l'audit comme exhaustif ou irréfutable.
+
+## État vérifié avant modification
+
+- Branche `phase1/audio-frontend`, commit poussé `58e96e7`, Pull Request #2 ouverte et fusionnable.
+- CI du commit `58e96e7` : RÉUSSIE, run `31809979210`, événement `pull_request`.
+- Outils présents : CMake/CTest 4.4.2, MSVC 19.44, clang-format et clang-tidy 19.1.5 dans Visual Studio, Git 2.55.0.
+- Outils absents : GitHub CLI (`gh`) et FFmpeg ; ils ne sont pas requis pour le build WAV actuel.
+
+## Défauts et limites trouvés
+
+- Import complet en mémoire sans plafond ; conversion vers `int` avant contrôle ; retour du décodeur ignoré.
+- Downmix limité aux deux premiers canaux ; date d'import fixe ; hash FNV-1a trop faible pour l'intégrité.
+- Fonctions allouantes marquées `noexcept`, callback asynchrone capturant `this`, erreur du périphérique audio ignorée.
+- JSON pouvant émettre NaN/Infinity.
+- M4A non garanti sous Windows, MP3 non testé sur corpus réel, rééchantillonnage absent, lecture interactive non exécutée et erreur d'import générique.
+
+## Corrections effectuées
+
+- Plafonds de 1 Gio et 30 millions de trames ; validation avant allocation et contrôle du retour de lecture.
+- Downmix de tous les canaux.
+- SHA-256 avant/après décodage avec rejet d'une modification concurrente ; identifiant `audio-<sha256>` ; horodatage ISO 8601 runtime.
+- Exceptions converties en échec d'import ; retrait des `noexcept` incorrects.
+- `SafePointer` dans le sélecteur et lecture désactivée sans périphérique audio.
+- NaN/infini JSON sérialisés en `null`.
+- Ajout de `juce_cryptography`, issu du même JUCE 8.0.15 épinglé.
+
+## Tests ajoutés et exécutés
+
+- WAV vide, une trame, mono 30 secondes, trois canaux et WAV tronqué.
+- SHA-256, identifiant contenu, timestamp runtime, NaN/infini JSON.
+- Build Debug : RÉUSSI ; CTest Debug final : 5/5, 4,25 s.
+- Build Release : RÉUSSI ; CTest Release final : 5/5, 2,26 s.
+- `clang-format --dry-run --Werror` : RÉUSSI, 24/24 fichiers C++.
+- `git diff --check` : RÉUSSI.
+- CI du code T-101.4 : NON ENCORE EXÉCUTÉE avant commit/push.
+
+## Contrôle documentaire
+
+- Les 13 documents permanents ont été relus dans l'ordre imposé.
+- Cahier des charges : préservé ; documents d'état, route, architecture, décisions, règles, dépendances, modèle, sécurité, risques, performances et reprise : actualisés selon leur but.
+- README : actualisé avec les commandes et les limites codec.
+
+## État final
+
+T-101 reste PARTIEL. Les preuves couvrent le WAV automatisé mais pas le rééchantillonnage, M4A, le corpus MP3 réel, la lecture interactive ni la reprise après interruption.
+
+## Prochaine action
+
+Committer et pousser T-101.4, vérifier la CI de la Pull Request #2, puis traiter ADR-006 et le rééchantillonnage.
+
+# 2026-08-14 - T-101.5 - Rééchantillonnage canonique d'analyse
+
+## Décision sur le code Python fourni
+
+Les deux parties reçues constituent un installateur Python de phase 0. Elles ne sont pas intégrées : elles créeraient un second projet `VIRE/`, dupliqueraient les documents permanents et réintroduiraient des états faux (`Git non initialisé`, CI reportée, phase 0 en cours). L'idée d'un prototype Python reste pertinente uniquement pour les futurs benchmarks isolés autorisés par ADR-002.
+
+## Travail effectué
+
+- Ajout de `frontend::resampleLinear`, rééchantillonneur pur, déterministe et borné.
+- Sample rate canonique d'analyse fixé à 16 kHz.
+- Diagnostics de silence, bruit et présence vocale calculés sur le flux rééchantillonné ; clipping conservé sur les trames source.
+- Cas d'une seule trame garanti par une sortie minimale d'une trame.
+- `analysisVersion` incrémentée de 1 à 2 et test JSON adapté.
+- ADR-007 et risque R-012 ajoutés : l'interpolation linéaire reste une baseline sans anti-repliement, non validée pour le pitch.
+
+## Tests
+
+- Premier passage Debug : ÉCHEC utile sur le WAV d'une trame ; cause identifiée (taille calculée inférieure à une trame).
+- Correction : sortie minimale d'une trame.
+- Validation finale après `analysisVersion=2` : build et CTest Debug RÉUSSIS, 5/5, 3,74 s ; build et CTest Release RÉUSSIS, 5/5, 1,69 s.
+- Formatage : RÉUSSI, 24/24 fichiers ; `git diff --check` : RÉUSSI.
+
+## État final
+
+Le critère « resampling » de phase 1 est couvert comme baseline fonctionnelle. Il n'est pas validé pour la phase pitch tant qu'un benchmark anti-repliement/qualité/CPU n'a pas comparé une méthode de meilleure qualité.
+
+## Prochaine action
+
+Relancer la validation finale après `analysisVersion=2`, puis publier lorsque GitHub CLI sera installé et authentifié. Ensuite : codec MP3/M4A ou lecture interactive selon la disponibilité du corpus et du périphérique.

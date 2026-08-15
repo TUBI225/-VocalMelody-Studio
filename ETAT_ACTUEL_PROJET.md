@@ -6,13 +6,13 @@
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend en cours)
 - Plateforme cible : Windows x64
-- Branche Git : `main` (branche de travail `phase1/audio-frontend`)
-- Dernier commit poussé : `6f00ef9` - docs(T-001): trace la fusion de la Pull Request #1
-- Dernière mise à jour : 2026-08-14 (socle phase 1 : structures audio et analyse de signal)
+- Branche Git : `phase1/audio-frontend` (Pull Request #2 ouverte vers `main`)
+- Dernier commit poussé : `58e96e7` - feat(phase1): corpus de tests d'intégration et métadonnées JSON
+- Dernière mise à jour : 2026-08-15 (T-101.5 validée localement ; GitHub CLI 2.97.0 installé et authentifié)
 
 ## État général
 
-La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (application minimale, types forts communs, test unitaire, CI Windows) est présent, compilé et validé ; la phase 0 est terminée (T-000 et T-001 TERMINÉ, PR #1 fusionnée). La **phase 1 (Audio Frontend)** est engagée par son socle : structures de domaine `AudioSource`, `AudioAnalysisResult`, `SilenceSegment`, `AudioFormat` et module `src/frontend` d'analyse de signal pure (RMS, peak, clipping, silence, bruit, downmix). Le socle est compilé et testé en Debug (`100% tests passed out of 2`). Restent pour la phase 1 : décodage/import réels WAV/MP3/M4A via JUCE, lecture, alimentation des diagnostics, tests d'intégration et validation CI.
+La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV réel, analyse mono, diagnostics, métadonnées JSON et transport de lecture sont implémentés. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, moyenne tous les canaux, calcule un SHA-256 avant/après décodage et rejette toute modification concurrente. Les 5 tests CTest passent localement en Debug et Release ; la CI du dernier commit poussé `58e96e7` est verte. Ces preuves ne valident pas encore le code local T-101.4 tant qu'il n'est pas poussé et testé par la CI.
 
 ## Tâches par statut
 
@@ -29,19 +29,20 @@ La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (applica
 
 - Infrastructure documentaire T-000 terminée.
 - T-001 : socle de build C++20/JUCE/CMake, application minimale, types forts `Seconds`, `Beats`, `Probability`, `Score01`, test CTest et CI Windows — builds/tests Debug/Release réussis et CI verte.
-- Aucune fonction musicale ou audio (phase 1 à venir).
+- Import/analyse WAV et sérialisation JSON validés automatiquement sur corpus synthétique.
 
 ## Fonctions partielles
 
-- T-101 (phase 1, Audio Frontend) : socle présent — structures `AudioSource`/`AudioAnalysisResult`/`SilenceSegment`/`AudioFormat` et analyse de signal pure (`src/frontend`) compilées et testées en Debug ; décodage/import de fichiers réels et lecture non encore implémentés.
+- T-101 : import/analyse WAV, rééchantillonnage mono linéaire à 16 kHz et métadonnées JSON validés ; lecture implémentée mais non testée avec un périphérique réel ; MP3 non validé sur corpus réel ; M4A non pris en charge de façon garantie par la configuration JUCE Windows.
 
 ## Tâches en cours ou bloquées
 
-- T-101 (socle phase 1 Audio Frontend) : PARTIEL - compilé et testé en Debug ; import/lecture à venir. La Pull Request #1 a été fusionnée dans `main` (merge commit `5a8c7c3`).
+- T-101 : PARTIEL dans la Pull Request #2. Les modifications locales de durcissement T-101.4 attendent commit, push et CI.
 
 ## Erreurs et risques critiques
 
-- Erreur critique applicative connue : aucune, application compilée mais non exécutée interactivement.
+- Aucun crash reproduit sur le corpus automatisé. Cela ne constitue pas une garantie d'absence d'erreur.
+- R-003 : encore OUVERT mais réduit par les plafonds d'import et les tests vide/court/long/corrompu ; l'import reste synchrone et charge le signal décodé en mémoire.
 - R-001 : RÉDUIT - builds locaux et CI réussis (MSVC 19.44, CMake 4.4.2).
 - R-007 : RÉSOLU - toolchain installée, téléchargement JUCE vérifié (SHA-256) puis configuration hors ligne, Git installé et socle commité/poussé.
 - R-008 : régime de licence JUCE à décider avant distribution.
@@ -63,12 +64,14 @@ La documentation permanente est initialisée. Le socle C++20/CMake/JUCE (applica
 - Vérification SHA-256 de l'archive JUCE (téléchargement complet via curl) : RÉUSSIE - empreinte `04f8d505...` conforme, 22 896 965 octets.
 - Configuration Debug : RÉUSSIE - `-- Configuring done (233.9s)` ; compilateurs C/C++ (MSVC 19.44) identifiés.
 - Build Debug : RÉUSSI - `VocalMelodyCommonTests.exe` et `VocalMelody Studio.exe` produits (`/W4 /WX`, aucune erreur ni avertissement applicatif).
-- CTest Debug : RÉUSSI - `100% tests passed out of 1` (test `common.strong_types`, 1,86 s).
+- CTest Debug T-101.4 : RÉUSSI - `100% tests passed out of 5` (4,25 s, validation finale).
 - Configuration Release : RÉUSSIE - `-- Configuring done (196.1s)` ; avertissement JUCE BUNDLE_ID corrigé.
 - Build Release : RÉUSSI - les deux exécutables Release produits.
-- CTest Release : RÉUSSI - `100% tests passed out of 1` (0,85 s).
-- CI distante : RÉUSSIE - workflow `ci` (run #2, head `dd7f8ec`) conclusion `success` ; jobs Debug et Release complets (checkout, formatage, configure, build, test).
+- CTest Release T-101.4 : RÉUSSI - `100% tests passed out of 5` (2,26 s, validation finale).
+- Conformité `clang-format` T-101.4 : RÉUSSIE - 24/24 fichiers C++ contrôlés.
+- Validation finale T-101.5 (`analysisVersion=2`) : Debug 5/5 en 3,74 s ; Release 5/5 en 1,69 s ; formatage 24/24 et `git diff --check` réussis.
+- CI distante de la branche : RÉUSSIE sur le dernier commit poussé `58e96e7` - run `31809979210`, jobs Debug/Release. La CI du code local T-101.4 reste à déclencher.
 
 ## Prochaine action recommandée
 
-Poursuivre la phase 1 : décoder et importer des fichiers réels (WAV/MP3/M4A) via JUCE (`juce_audio_formats`), alimenter `AudioSource` et `AudioAnalysisResult`, ajouter la lecture et les tests d'intégration « import → analyse → sauvegarde metadata », puis valider la CI.
+Pousser T-101.4/T-101.5 et vérifier leur CI, puis choisir une stratégie de décodage M4A/MP3 juridiquement compatible et effectuer une validation manuelle de la lecture. Avant la phase pitch, comparer le rééchantillonneur linéaire à une méthode avec filtrage anti-repliement.

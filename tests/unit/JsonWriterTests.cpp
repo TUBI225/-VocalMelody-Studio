@@ -2,6 +2,7 @@
 
 #include "TestContext.h"
 
+#include <limits>
 #include <string>
 
 namespace {
@@ -66,6 +67,16 @@ void testDouble(TestContext& context) {
                    "double values serialize with default formatting");
 }
 
+void testNonFiniteDouble(TestContext& context) {
+    vocalmelody::common::JsonWriter writer;
+    writer.beginArray();
+    writer.value(std::numeric_limits<double>::quiet_NaN());
+    writer.value(std::numeric_limits<double>::infinity());
+    writer.endArray();
+    context.expect(writer.toString() == "[null,null]",
+                   "non-finite doubles never produce invalid JSON tokens");
+}
+
 } // namespace
 
 int main() {
@@ -74,5 +85,6 @@ int main() {
     testNested(context);
     testStringEscaping(context);
     testDouble(context);
+    testNonFiniteDouble(context);
     return context.result();
 }
