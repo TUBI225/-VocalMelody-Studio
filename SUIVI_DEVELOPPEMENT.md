@@ -914,3 +914,37 @@ MP3 est implémenté et validé localement en Debug/Release sur un vecteur réel
 - Windows x64 Release : formatage, configuration, build et 6 tests réussis.
 
 La preuve MP3 couvre désormais les builds locaux et la CI sur le vecteur Layer III épinglé. Le corpus musical/utilisateur, la lecture interactive et le M4A restent ouverts ; T-101 reste PARTIELLE.
+
+# 2026-08-15 - T-101.9 - Fusionner la Pull Request #2 (phase 1 Audio Frontend)
+
+## Objectif
+
+Fusionner le socle de la phase 1 (Audio Frontend) dans `main`, après corrections issues de l'audit.
+
+## Travail effectué
+
+- Corrections mineures post-audit : retrait de `.m4a` du sélecteur de fichiers (M4A non encore supporté) et documentation de `minimp3` dans le README (prérequis réseau).
+- Recompilation locale de l'application : RÉUSSIE (`/W4 /WX`, aucune erreur).
+- CTest local : RÉUSSI - 6/6.
+- CI (run #15) : RÉUSSIE - jobs Debug et Release `success` sur le commit `11aba83`.
+- Fusion de la Pull Request #2 via l'API GitHub (méthode `merge`, historique préservé) : merge commit `8d0b715d9136dc3142126f42f4955a7c5810b197`.
+- Synchronisation du dépôt local : `fetch`, `switch main`, `merge --ff-only origin/main` (45 fichiers, +2796/−53).
+- Suppression de la branche `phase1/audio-frontend` (locale et distante).
+
+## Résultats
+
+- PR #2 : `merged=true`, merge commit `8d0b715`.
+- `main` : 8d0b715 (Merge pull request #2) sur 11aba83.
+- Working tree local : propre, sur `main`, synchronisé avec `origin/main`.
+
+## État final de la tâche
+
+T-101 (socle phase 1) : PARTIEL - import WAV/MP3, diagnostics, resampling 16 kHz, lecture et métadonnées fusionnés dans `main` ; reste la validation manuelle de la lecture, le corpus musical réel et M4A.
+
+## Travail restant
+
+- Validation manuelle de la lecture (périphérique audio).
+- Corpus musical réel (MP3/M4A, fichiers longs, corrompus).
+- Rééchantillonneur validé (filtrage anti-repliement) avant la phase pitch (R-012).
+- Engager la phase 2 (interface `IPitchEstimator`, structures pitch).
+

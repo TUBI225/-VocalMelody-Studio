@@ -6,13 +6,13 @@
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend en cours)
 - Plateforme cible : Windows x64
-- Branche Git : `phase1/audio-frontend` (Pull Request #2 ouverte vers `main`)
-- Dernier commit technique poussé : `b89c053` - feat(audio): ajoute le décodage MP3 vérifié
-- Dernière mise à jour : 2026-08-15 (T-101.8 MP3 en validation locale ; GitHub CLI 2.97.0 installé et authentifié)
+- Branche Git : `main` (Pull Requests #1 et #2 fusionnées)
+- Dernier commit poussé : `8d0b715` - Merge pull request #2 from TUBI225/phase1/audio-frontend
+- Dernière mise à jour : 2026-08-15 (phase 1 fusionnée dans main)
 
 ## État général
 
-La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV réel, analyse mono, diagnostics, métadonnées JSON, transport de lecture et décodage MP3 sont implémentés. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. T-101.8 passe 6/6 tests en Debug et Release, le contrôle de formatage 28/28 et la CI Windows du commit `b89c053` (run `31886309639`).
+La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV/MP3 réel, analyse mono, diagnostics, métadonnées JSON, resampling 16 kHz, transport de lecture et décodage MP3 sont implémentés et **fusionnés dans `main` (PR #2, merge commit `8d0b715`)**. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. La suite de tests passe 6/6 en Debug et Release, le contrôle de formatage 28/28 et la CI Windows du dernier commit (run #15) est verte. Restent : validation manuelle de la lecture, corpus musical réel et M4A.
 
 ## Tâches par statut
 
