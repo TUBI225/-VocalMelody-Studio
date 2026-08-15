@@ -946,5 +946,35 @@ T-101 (socle phase 1) : PARTIEL - import WAV/MP3, diagnostics, resampling 16 kHz
 - Validation manuelle de la lecture (périphérique audio).
 - Corpus musical réel (MP3/M4A, fichiers longs, corrompus).
 - Rééchantillonneur validé (filtrage anti-repliement) avant la phase pitch (R-012).
-- Engager la phase 2 (interface `IPitchEstimator`, structures pitch).
+- Benchmark phase 2 : estimateurs RMVPE/CREPE/pYIN/YIN sur le corpus vocal, mesures (cents, octave error, voicing accuracy, CPU, RAM) puis sélection FAST/BALANCED/HIGH QUALITY.
+
+# 2026-08-15 - T-102 - Socle phase 2 : interface IPitchEstimator et structures pitch
+
+## Objectif
+
+Poser le socle de la phase 2 (Pitch Benchmark) sur une branche dédiée : les structures pitch conformes au modèle (§8-10) et l'interface unique `IPitchEstimator` exigée par l'architecture (§10), sans dépendance à JUCE.
+
+## Travail effectué
+
+- Types forts pitch ajoutés dans `StrongTypes.h` : `MidiPitch` (valeur finie ≥ 0) et `Cents` (valeur finie, négative autorisée pour les déviations), via le nouveau gabarit `FiniteValue`.
+- Structures pitch dans le domaine commun (`src/common`, `Pitch.h` / `Pitch.cpp`) :
+  - `PitchFrame` (timeSeconds, frequencyHz, midiFloat, confidence, voicedProbability, estimatorId) ;
+  - `PitchCandidate` (midiFloat, frequencyHz, probability, sourceEstimators, octaveAmbiguity) ;
+  - `PitchDistributionFrame` (timeSeconds, candidates, fusedConfidence, voicedProbability) ;
+  - fabriques validantes `create` (rejet des valeurs hors bornes) et helper `frequencyHzToMidi`.
+- Nouveau module `src/pitch` (statique, lié à `VocalMelody::Common`, sans JUCE) :
+  - interface `IPitchEstimator` : `estimate(MonoSignal) → std::vector<PitchFrame>` et `id()` ;
+  - type `MonoSignal` (samples mono + sampleRate) ;
+  - estimateur de référence `AutocorrelationPitchEstimator` (fenêtre 2048, hop 1024, plage 80-2000 Hz) : premier pic local de l'autocorrélation normalisée au-dessus du seuil de voicing 0,8, corrigeant le biais sous-harmonique observé avec le pic global.
+- Nouveaux tests CTest : `pitch.structures` (bornes des structures, `frequencyHzToMidi`, types forts) et `pitch.autocorrelation` (sinus 440 Hz détecté dans ±10 Hz, signal vide, usage via l'interface).
+
+## Validation locale
+
+- Build Debug : RÉUSSI, aucun avertissement (`/W4 /WX`).
+- CTest Debug : RÉUSSI - 8/8 (4,99 s) - 6 suites existantes + 2 nouvelles suites pitch.
+- clang-format : RÉUSSI - 35/35 fichiers conformes.
+
+## État
+
+T-102 : EN COURS - le socle (structures pitch + interface + baseline autocorrélation) est validé localement sur la branche `phase2/pitch-benchmark`. Le benchmark proprement dit (estimateurs RMVPE/CREPE/pYIN/YIN, corpus vocal, mesures) reste à réaliser, de préférence après le rééchantillonneur anti-repliement (R-012).
 

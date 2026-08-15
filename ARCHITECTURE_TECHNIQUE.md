@@ -336,6 +336,14 @@ Implémentations possibles :
 
 Le reste du logiciel ne doit pas connaître le modèle utilisé.
 
+État d'implémentation (T-102, socle phase 2, 2026-08-15) :
+
+- module `src/pitch` (statique, sans JUCE) : `IPitchEstimator::estimate(MonoSignal) → std::vector<PitchFrame>` et `id()` ;
+- `MonoSignal` : échantillons mono + sample rate ;
+- structures `PitchFrame`, `PitchCandidate`, `PitchDistributionFrame` dans `src/common` (domaine commun, sans JUCE) ;
+- baseline `AutocorrelationPitchEstimator` : premier pic local de l'autocorrélation normalisée au-dessus du seuil de voicing (évite le biais sous-harmonique) ;
+- les estimateurs RMVPE / pYIN / CREPE / YIN arrivent avec le benchmark de la phase 2 ; le reste du logiciel ne dépend que de `IPitchEstimator`.
+
 ======================================================================
 11. PITCH FUSION ENGINE
 ======================================================================

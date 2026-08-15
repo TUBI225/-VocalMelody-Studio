@@ -23,6 +23,7 @@ include(VocalMelodyWarnings)
 
 add_subdirectory(src/common)
 add_subdirectory(src/frontend)
+add_subdirectory(src/pitch)
 
 if(VOCALMELODY_BUILD_APP)
     FetchContent_Declare(

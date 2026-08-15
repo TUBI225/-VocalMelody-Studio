@@ -4,22 +4,24 @@
 
 - Projet : VocalMelody Studio
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
-- Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend en cours)
+- Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend PARTIELLE ; phase 2 Pitch Benchmark en cours — socle)
 - Plateforme cible : Windows x64
-- Branche Git : `main` (Pull Requests #1 et #2 fusionnées)
-- Dernier commit poussé : `8d0b715` - Merge pull request #2 from TUBI225/phase1/audio-frontend
-- Dernière mise à jour : 2026-08-15 (phase 1 fusionnée dans main)
+- Branche Git : `phase2/pitch-benchmark` (socle phase 2 validé localement, PR en préparation)
+- Dernier commit poussé : `11aba83` (main, CI verte) ; branche `phase2/pitch-benchmark` non encore poussée
+- Dernière mise à jour : 2026-08-15 (socle phase 2 implémenté et validé localement)
 
 ## État général
 
 La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV/MP3 réel, analyse mono, diagnostics, métadonnées JSON, resampling 16 kHz, transport de lecture et décodage MP3 sont implémentés et **fusionnés dans `main` (PR #2, merge commit `8d0b715`)**. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. La suite de tests passe 6/6 en Debug et Release, le contrôle de formatage 28/28 et la CI Windows du dernier commit (run #15) est verte. Restent : validation manuelle de la lecture, corpus musical réel et M4A.
+
+Le **socle de la phase 2 (Pitch Benchmark)** est implémenté et validé localement sur la branche `phase2/pitch-benchmark` : structures `PitchFrame` / `PitchCandidate` / `PitchDistributionFrame` et types forts `MidiPitch` / `Cents` dans `src/common`, interface `IPitchEstimator` et baseline `AutocorrelationPitchEstimator` dans le nouveau module `src/pitch` (sans JUCE). CTest 8/8 et clang-format 35/35. Le benchmark proprement dit (RMVPE/CREPE/pYIN/YIN, corpus vocal, mesures) reste à réaliser.
 
 ## Tâches par statut
 
 | Statut | Nombre |
 |---|---:|
 | TERMINÉ | 2 |
-| EN COURS | 0 |
+| EN COURS | 1 |
 | PARTIEL | 1 |
 | À VÉRIFIER | 0 |
 | BLOQUÉ | 0 |
@@ -34,10 +36,12 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 ## Fonctions partielles
 
 - T-101 : import/analyse WAV, rééchantillonnage mono linéaire à 16 kHz et métadonnées JSON validés ; décodeur MP3 `minimp3` intégré et validé localement sur un vecteur Layer III réel ; M4A non implémenté et lecture interactive à finaliser.
+- T-102 : socle phase 2 validé localement — structures pitch, types forts `MidiPitch`/`Cents`, interface `IPitchEstimator` et baseline autocorrélation ; le benchmark (estimateurs cibles, corpus vocal, mesures) reste à réaliser.
 
 ## Tâches en cours ou bloquées
 
 - T-101 : PARTIEL dans la Pull Request #2. Le nouveau code MP3 est vert en CI ; un corpus musical/utilisateur et une validation interactive restent nécessaires. M4A reste à concevoir.
+- T-102 : EN COURS sur la branche `phase2/pitch-benchmark`, socle validé localement (8/8 CTest, 35/35 clang-format) ; la Pull Request de fusion n'est pas encore ouverte.
 
 ## Erreurs et risques critiques
 
@@ -74,4 +78,4 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 
 ## Prochaine action recommandée
 
-Tester un corpus musical/utilisateur MP3, effectuer une validation manuelle de la lecture et choisir une stratégie M4A juridiquement et techniquement compatible. Avant la phase pitch, comparer le rééchantillonneur linéaire à une méthode avec filtrage anti-repliement.
+Tester un corpus musical/utilisateur MP3, effectuer une validation manuelle de la lecture et choisir une stratégie M4A juridiquement et techniquement compatible. Avant la phase pitch, comparer le rééchantillonneur linéaire à une méthode avec filtrage anti-repliement. Le socle phase 2 (T-102) étant validé localement, ouvrir la Pull Request de fusion puis réaliser le benchmark des estimateurs sur le corpus vocal.

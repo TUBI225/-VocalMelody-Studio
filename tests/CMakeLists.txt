@@ -19,6 +19,20 @@ vocalmelody_enable_warnings(VocalMelodyFrontendTests)
 
 add_test(NAME frontend.signal_analysis COMMAND VocalMelodyFrontendTests)
 
+add_executable(VocalMelodyPitchTests unit/PitchStructuresTests.cpp)
+
+target_link_libraries(VocalMelodyPitchTests PRIVATE VocalMelody::Common)
+vocalmelody_enable_warnings(VocalMelodyPitchTests)
+
+add_test(NAME pitch.structures COMMAND VocalMelodyPitchTests)
+
+add_executable(VocalMelodyPitchEstimatorTests unit/AutocorrelationEstimatorTests.cpp)
+
+target_link_libraries(VocalMelodyPitchEstimatorTests PRIVATE VocalMelody::Pitch VocalMelody::Common)
+vocalmelody_enable_warnings(VocalMelodyPitchEstimatorTests)
+
+add_test(NAME pitch.autocorrelation COMMAND VocalMelodyPitchEstimatorTests)
+
 if(TARGET VocalMelody::Audio)
     add_executable(VocalMelodyAudioImporterTests unit/AudioImporterTests.cpp)
 

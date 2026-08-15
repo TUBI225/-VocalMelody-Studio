@@ -2,6 +2,7 @@ add_library(vocalmelody_common STATIC
     AudioSource.cpp
     AudioAnalysisResult.cpp
     JsonWriter.cpp
+    Pitch.cpp
 )
 add_library(VocalMelody::Common ALIAS vocalmelody_common)
 

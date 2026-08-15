@@ -1659,7 +1659,9 @@ Types effectivement introduits dans `StrongTypes.h` :
 - `Seconds` : valeur finie supérieure ou égale à zéro ;
 - `Beats` : valeur finie supérieure ou égale à zéro ;
 - `Probability` : valeur finie comprise dans [0, 1] ;
-- `Score01` : valeur finie comprise dans [0, 1].
+- `Score01` : valeur finie comprise dans [0, 1] ;
+- `MidiPitch` : valeur finie supérieure ou égale à zéro (ajouté le 2026-08-15, socle phase 2) ;
+- `Cents` : valeur finie, négative autorisée pour les déviations (ajouté le 2026-08-15, socle phase 2).
 
 Règles d'implémentation :
 - construction contrôlée par `fromValue` ;
@@ -1670,8 +1672,6 @@ Règles d'implémentation :
 
 Types non encore implémentés :
 - `BPM` ;
-- `MidiPitch` ;
-- `Cents` ;
 - identifiants stables ;
 - structures L0, L1 et L2.
 
@@ -1731,3 +1731,30 @@ Limites de modèle encore ouvertes :
 `DecodedAudioData` est une structure interne et non persistante. Elle transporte uniquement `sampleRate`, `channelCount`, `frameCount` et le signal mono nécessaire à l'analyse, afin de borner les copies mémoire. Après un décodage MP3 réussi, l'importeur crée une `AudioSource` avec `format=Mp3`. Cette valeur est attribuée seulement au chemin d'extension MP3 validé ; elle ne doit pas être inférée d'un repli de codec appliqué à une autre extension.
 
 `AudioFormat::M4a` reste une intention de schéma. Aucun objet M4A ne doit être créé tant qu'un décodeur M4A réel, testé et audité n'est pas intégré.
+
+## 101. Etat d'implémentation - socle pitch phase 2 (T-102)
+
+Date : 2026-08-15
+
+Structures pitch conformes aux sections 8, 9 et 10, introduites dans `src/common` (`Pitch.h` / `Pitch.cpp`, domaine commun sans JUCE) :
+
+- `PitchFrame` (section 8) : timeSeconds (`Seconds`), frequencyHz (strictement positive), midiFloat (`MidiPitch`), confidence (`Score01`), voicedProbability (`Probability`), estimatorId (non vide). Création via `PitchFrame::create` qui rejette les valeurs hors bornes. Helper `frequencyHzToMidi` : `69 + 12 * log2(f / 440)`.
+- `PitchCandidate` (section 9) : midiFloat (`MidiPitch`), frequencyHz (strictement positive), probability (`Probability`), sourceEstimators, octaveAmbiguity.
+- `PitchDistributionFrame` (section 10) : timeSeconds (`Seconds`), candidates, fusedConfidence (`Score01`), voicedProbability (`Probability`).
+
+Interface unique (architecture §10), module `src/pitch` indépendant de JUCE :
+
+- `IPitchEstimator` : `estimate(MonoSignal) -> std::vector<PitchFrame>` et `id()` ;
+- `MonoSignal` : `{ samples mono, sampleRate }` ;
+- baseline `AutocorrelationPitchEstimator` (fenêtre 2048, hop 1024, plage 80-2000 Hz) : premier pic local de l'autocorrélation normalisée au-dessus du seuil de voicing 0,8, pour éviter le biais sous-harmonique du pic global.
+
+Validation :
+
+- Test CTest `pitch.structures` : RÉUSSI (bornes des structures, `frequencyHzToMidi`, `MidiPitch`, `Cents`).
+- Test CTest `pitch.autocorrelation` : RÉUSSI (sinus 440 Hz à 16 kHz détecté dans ±10 Hz, signal vide, sample rate invalide, usage via l'interface).
+- Build Debug : réussi, aucun avertissement ; CTest global 8/8 ; clang-format 35/35.
+
+Limites du socle (le benchmark reste à faire, feuille de route phase 2) :
+
+- l'estimateur autocorrélation est une baseline de référence, pas un candidat final ;
+- aucune fusion (`PitchDistributionFrame` produite par fusion de plusieurs estimateurs) ni métrique de benchmark n'est encore implémentée.
