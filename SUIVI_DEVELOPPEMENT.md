@@ -1013,3 +1013,13 @@ Le socle phase 2 est donc intégré à `main` et validé localement + CI. Le ben
 ## État
 
 La baseline couvre désormais localement sa plage annoncée aux deux bornes. Cela ne valide pas sa robustesse sur voix, bruit, vibrato ou glissando et ne remplace pas le benchmark T-102.
+
+## Résultat CI de T-102.1
+
+- Commit technique : `dd3fff0` (`fix(pitch): corrige les bornes de l autocorrelation`).
+- GitHub Actions : run `31893018165`, conclusion RÉUSSIE.
+- Windows x64 Debug : formatage, configuration, build et 8 tests réussis.
+- Windows x64 Release : formatage, configuration, build et 8 tests réussis.
+- Pull Request #4 ouverte en brouillon vers `main` ; fusion non effectuée.
+
+La correction est validée localement et en CI. Les limites fonctionnelles du benchmark consignées ci-dessus restent inchangées.
