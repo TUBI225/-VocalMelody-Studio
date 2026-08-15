@@ -7,14 +7,14 @@
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend PARTIELLE ; phase 2 Pitch Benchmark en cours — socle fusionné)
 - Plateforme cible : Windows x64
 - Branche Git : `main` (Pull Requests #1, #2 et #3 fusionnées)
-- Dernier commit poussé : `466f4cb` - Merge pull request #3 from TUBI225/phase2/pitch-benchmark
+- Dernier commit poussé sur `main` : `65e7c42` - docs(pitch): trace la fusion de la Pull Request #3
 - Dernière mise à jour : 2026-08-15 (socle phase 2 fusionné dans main, CI verte)
 
 ## État général
 
 La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV/MP3 réel, analyse mono, diagnostics, métadonnées JSON, resampling 16 kHz, transport de lecture et décodage MP3 sont implémentés et **fusionnés dans `main` (PR #2, merge commit `8d0b715`)**. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. La suite de tests passe 6/6 en Debug et Release, le contrôle de formatage 28/28 et la CI Windows du dernier commit (run #15) est verte. Restent : validation manuelle de la lecture, corpus musical réel et M4A.
 
-Le **socle de la phase 2 (Pitch Benchmark)** est implémenté, validé et **fusionné dans `main` (PR #3, merge commit `466f4cb`)** : structures `PitchFrame` / `PitchCandidate` / `PitchDistributionFrame` et types forts `MidiPitch` / `Cents` dans `src/common`, interface `IPitchEstimator` et baseline `AutocorrelationPitchEstimator` dans le nouveau module `src/pitch` (sans JUCE). CTest 8/8 en Debug et Release, clang-format 35/35, CI verte (run `31890705017`). Le benchmark proprement dit (RMVPE/CREPE/pYIN/YIN, corpus vocal, mesures) reste à réaliser.
+Le **socle de la phase 2 (Pitch Benchmark)** est implémenté, validé et **fusionné dans `main` (PR #3, merge commit `466f4cb`)** : structures `PitchFrame` / `PitchCandidate` / `PitchDistributionFrame` et types forts `MidiPitch` / `Cents` dans `src/common`, interface `IPitchEstimator` et baseline `AutocorrelationPitchEstimator` dans le nouveau module `src/pitch` (sans JUCE). La correction T-102.1 valide localement les bornes inclusives 80/2000 Hz et ferme `frequencyHzToMidi` sur les valeurs non finies. CTest 8/8 en Debug et Release, clang-format 35/35 ; la CI de cette correction reste à exécuter. Le benchmark proprement dit (RMVPE/CREPE/pYIN/YIN, corpus vocal, mesures) reste à réaliser.
 
 ## Tâches par statut
 

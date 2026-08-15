@@ -69,6 +69,13 @@ Interprétation : ces chiffres prouvent l'exécution des tests, pas la performan
 
 Ces résultats valident le comportement fonctionnel testé, pas la qualité spectrale. Un benchmark anti-repliement, précision et coût CPU est requis avant d'utiliser cette baseline pour le pitch.
 
+## Mesures T-102.1
+
+- CTest Debug après correction des bornes d'autocorrélation : 8/8 en 4,02 s.
+- CTest Release : 8/8 en 9,78 s.
+- Le tableau de corrélation est limité à la fenêtre de 2048 échantillons, même si le sample rate fourni annonce un lag maximal supérieur.
+- Temps CPU et mémoire isolés de l'estimateur : NON MESURÉS ; le benchmark phase 2 reste requis.
+
 ## Mesures T-101.8
 
 - CTest Debug final après intégration MP3 : 6/6 tests réussis en 8,29 s.

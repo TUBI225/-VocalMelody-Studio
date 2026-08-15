@@ -341,7 +341,7 @@ Le reste du logiciel ne doit pas connaître le modèle utilisé.
 - module `src/pitch` (statique, sans JUCE) : `IPitchEstimator::estimate(MonoSignal) → std::vector<PitchFrame>` et `id()` ;
 - `MonoSignal` : échantillons mono + sample rate ;
 - structures `PitchFrame`, `PitchCandidate`, `PitchDistributionFrame` dans `src/common` (domaine commun, sans JUCE) ;
-- baseline `AutocorrelationPitchEstimator` : premier pic local de l'autocorrélation normalisée au-dessus du seuil de voicing (évite le biais sous-harmonique) ;
+- baseline `AutocorrelationPitchEstimator` : premier pic local de l'autocorrélation normalisée au-dessus du seuil de voicing (évite le biais sous-harmonique) ; les voisins immédiatement hors de la plage sont calculés pour valider correctement les pics aux bornes inclusives 80/2000 Hz, et le tableau de corrélation est borné à la fenêtre ;
 - les estimateurs RMVPE / pYIN / CREPE / YIN arrivent avec le benchmark de la phase 2 ; le reste du logiciel ne dépend que de `IPitchEstimator`.
 
 ======================================================================

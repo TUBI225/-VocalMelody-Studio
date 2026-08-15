@@ -989,3 +989,27 @@ T-102 : EN COURS - le socle (structures pitch + interface + baseline autocorrél
 
 Le socle phase 2 est donc intégré à `main` et validé localement + CI. Le benchmark (estimateurs cibles, corpus vocal, mesures FAST/BALANCED/HIGH QUALITY) reste à réaliser.
 
+# 2026-08-15 - T-102.1 - Correction des bornes de la baseline pitch
+
+## Problème reproduit
+
+- La recherche du premier pic local excluait `minLag` et `maxLag`, donc les fréquences annoncées aux bornes 2000 Hz et 80 Hz n'étaient pas réellement couvertes.
+- Une première correction naïve sans voisins extérieurs classait un sinus de 80 Hz à 2000 Hz, car son autocorrélation reste élevée aux petits lags.
+- `frequencyHzToMidi` laissait passer `NaN` et `+infini` comme résultats non finis.
+
+## Correction
+
+- Calcul d'un lag voisin immédiatement avant et après la plage sélectionnable ; seuls les lags correspondant à 80-2000 Hz peuvent être retenus.
+- Plafonnement des lags calculés à la fenêtre de 2048 échantillons, empêchant une allocation proportionnelle à un sample rate anormalement grand.
+- Retour de zéro par `frequencyHzToMidi` pour toute fréquence non finie ou non positive, conformément au comportement existant des entrées invalides.
+- Tests de non-régression sur sinus 80 Hz, 2000 Hz, `NaN` et `+infini`.
+
+## Validation locale
+
+- Debug : build réussi, CTest 8/8 en 4,02 s.
+- Release : build réussi, CTest 8/8 en 9,78 s.
+- CI : à exécuter après publication de la branche corrective.
+
+## État
+
+La baseline couvre désormais localement sa plage annoncée aux deux bornes. Cela ne valide pas sa robustesse sur voix, bruit, vibrato ou glissando et ne remplace pas le benchmark T-102.
