@@ -4,7 +4,7 @@ Application Windows de génération de mélodies, d'accords et d'arrangements à
 
 ## État
 
-La phase 0 est terminée et la phase 1 Audio Frontend est en cours sur `phase1/audio-frontend` (Pull Request #2). L'application importe et analyse des WAV, rééchantillonne le flux mono à 16 kHz, produit des métadonnées JSON et contient un transport de lecture JUCE. Les builds Debug/Release et les 5 tests CTest locaux réussissent ; la CI Windows est verte sur le dernier commit poussé `58e96e7`. Cette validation n'est pas exhaustive : le rééchantillonneur linéaire est une baseline pour les diagnostics, pas encore un choix validé pour le pitch ; la lecture réelle et un corpus MP3/M4A restent également à valider.
+La phase 0 est terminée et la phase 1 Audio Frontend est en cours sur `phase1/audio-frontend` (Pull Request #2). L'application importe et analyse des WAV, rééchantillonne le flux mono à 16 kHz, produit des métadonnées JSON et contient un transport de lecture JUCE. Les builds Debug/Release, les 5 tests CTest locaux et la CI Windows du commit `7b24b76` réussissent. Cette validation n'est pas exhaustive : le rééchantillonneur linéaire est une baseline pour les diagnostics, pas encore un choix validé pour le pitch ; la lecture réelle et un corpus MP3/M4A restent également à valider.
 
 ## Documentation permanente
 

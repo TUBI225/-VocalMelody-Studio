@@ -834,3 +834,30 @@ Le critère « resampling » de phase 1 est couvert comme baseline fonctionnelle
 ## Prochaine action
 
 Relancer la validation finale après `analysisVersion=2`, puis publier lorsque GitHub CLI sera installé et authentifié. Ensuite : codec MP3/M4A ou lecture interactive selon la disponibilité du corpus et du périphérique.
+
+# 2026-08-15 - T-101.6 - Publication et CI de l'audit Audio Frontend
+
+## Travail effectué
+
+- GitHub CLI 2.97.0 installé avec `winget` et authentifié pour `TUBI225`.
+- Commit technique `7b24b76` créé puis poussé sur `phase1/audio-frontend`.
+- Pull Request #2 mise à jour automatiquement.
+- CI `31854004303` suivie jusqu'à sa conclusion réelle.
+
+## Résultats CI
+
+- Conclusion globale : RÉUSSIE.
+- Windows x64 Debug : RÉUSSI en 3 min 36 s (formatage, configure, build, 5 tests).
+- Windows x64 Release : RÉUSSI en 5 min 20 s (formatage, configure, build, 5 tests).
+- Avertissement non bloquant : `actions/checkout` v4 ciblait Node.js 20 déprécié et était forcé sur Node.js 24.
+
+## Correction de maintenance
+
+- Version officielle la plus récente vérifiée : `actions/checkout` v7.0.1, publiée le 2026-07-20.
+- Workflow mis à jour vers le commit immuable `3d3c42e5aac5ba805825da76410c181273ba90b1`.
+- `action.yml` de ce commit vérifié : runtime `node24`.
+- Une nouvelle CI doit valider ce changement de workflow avant clôture.
+
+## État
+
+Le code T-101.4/T-101.5 est validé localement et par la CI. T-101 reste PARTIEL pour les limites déjà consignées : lecture interactive, corpus MP3, codec M4A et qualité du rééchantillonnage avant pitch.

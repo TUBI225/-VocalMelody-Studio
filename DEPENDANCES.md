@@ -7,7 +7,7 @@
 | C++ | C++20 | Langage du cœur et de l'application | Obligatoire | Standard ISO | https://isocpp.org/ | Compilateur MSVC 2022 recommandé ; mise à niveau après validation CI | 2026-08-14 |
 | CMake | >= 3.24 | Configuration et orchestration du build | Obligatoire | BSD-3-Clause | https://cmake.org/ | Installer localement ou utiliser l'image GitHub Actions ; version minimale dans `CMakeLists.txt` | 2026-08-14 |
 | JUCE | 8.0.15, commit `91ad83ae34a81e0833b1a2b0866f54846370ae53` | Application Windows, UI, audio et MIDI futurs | Obligatoire pour l'application, pas pour le domaine commun | Double licence AGPLv3 ou JUCE commerciale | https://github.com/juce-framework/JUCE | `FetchContent` avec SHA-256 ; toute mise à jour exige revue de licence, changelog et tests | 2026-08-14 |
-| GitHub Actions Checkout | v4, commit `11d5960a326750d5838078e36cf38b85af677262` | Lecture du dépôt dans la CI | Obligatoire pour la CI | MIT | https://github.com/actions/checkout | Action épinglée au commit ; vérifier avant mise à jour | 2026-08-14 |
+| GitHub Actions Checkout | v7.0.1, commit `3d3c42e5aac5ba805825da76410c181273ba90b1` | Lecture du dépôt dans la CI | Obligatoire pour la CI | MIT | https://github.com/actions/checkout | Action épinglée au commit ; runtime Node.js 24 vérifié | 2026-08-15 |
 
 ## Outils de qualité configurés
 

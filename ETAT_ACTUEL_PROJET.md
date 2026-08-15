@@ -7,7 +7,7 @@
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend en cours)
 - Plateforme cible : Windows x64
 - Branche Git : `phase1/audio-frontend` (Pull Request #2 ouverte vers `main`)
-- Dernier commit poussé : `58e96e7` - feat(phase1): corpus de tests d'intégration et métadonnées JSON
+- Dernier commit technique poussé : `7b24b76` - feat(phase1): durcit import et ajoute resampling 16 kHz
 - Dernière mise à jour : 2026-08-15 (T-101.5 validée localement ; GitHub CLI 2.97.0 installé et authentifié)
 
 ## État général
@@ -70,7 +70,7 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 - CTest Release T-101.4 : RÉUSSI - `100% tests passed out of 5` (2,26 s, validation finale).
 - Conformité `clang-format` T-101.4 : RÉUSSIE - 24/24 fichiers C++ contrôlés.
 - Validation finale T-101.5 (`analysisVersion=2`) : Debug 5/5 en 3,74 s ; Release 5/5 en 1,69 s ; formatage 24/24 et `git diff --check` réussis.
-- CI distante de la branche : RÉUSSIE sur le dernier commit poussé `58e96e7` - run `31809979210`, jobs Debug/Release. La CI du code local T-101.4 reste à déclencher.
+- CI distante de T-101.4/T-101.5 : RÉUSSIE sur `7b24b76` - run `31854004303`, Debug 3 min 36 s et Release 5 min 20 s. L'avertissement Node.js 20 observé sur l'ancien `actions/checkout` a conduit à l'épinglage de v7.0.1/Node.js 24 ; cette mise à jour attend sa propre CI.
 
 ## Prochaine action recommandée
 

@@ -1245,7 +1245,7 @@ Critères de validation :
 - [VALIDÉ] fichiers WAV vide, une trame, 30 secondes, multicanal et tronqué sans crash ;
 - [VALIDÉ] builds et CTest locaux Debug/Release, 5/5 tests ;
 - [VALIDÉ SUR `58e96e7`] CI Pull Request #2 verte ;
-- [À VALIDER APRÈS PUSH] CI des corrections T-101.4 ;
+- [VALIDÉ] CI des corrections T-101.4/T-101.5 : run `31854004303`, Debug et Release réussis ;
 - [NON VALIDÉ] corpus MP3 réel ;
 - [NON IMPLÉMENTÉ/GARANTI] décodage M4A Windows ;
 - [VALIDÉ COMME BASELINE] rééchantillonnage mono linéaire à 16 kHz, borné et testé ; qualité pitch/anti-repliement non validée ;
