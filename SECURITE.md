@@ -53,3 +53,12 @@ Limite : le téléchargement de dépendance rend le premier build dépendant du 
 - Le fichier audio original est ouvert en lecture et n'est jamais réécrit par l'importeur.
 
 Limites restantes : l'import est synchrone sur le thread UI, le signal complet est chargé en mémoire sous le plafond, l'erreur affichée reste générique et aucun fuzzing des codecs n'a été exécuté. Le JSON de métadonnées est écrit directement et non encore par remplacement atomique ; il ne doit pas être utilisé comme sauvegarde projet critique.
+
+## Sécurité du décodeur MP3 - T-101.8
+
+- `minimp3` est épinglé au commit `ea99364f61c14656440e8d77e9c233ccf3124633` et son archive est contrôlée par SHA-256 ; sa licence CC0 est enregistrée dans `DEPENDANCES.md`.
+- L'entrée conserve le plafond de 1 Gio ; le résultat est limité à 30 millions de trames, un ou deux canaux, un sample rate positif et un nombre d'échantillons divisible par le nombre de canaux.
+- Le décodage doit être complet et sans erreur ; les ressources natives sont libérées par RAII.
+- Les tests couvrent un vrai vecteur Layer III non silencieux, la mémoire, le fichier, les données corrompues et une extension trompeuse.
+
+Limites restantes : aucun fuzzing ni corpus utilisateur hostile n'a encore été exécuté. Le statut CC0 et l'épinglage réduisent le risque de chaîne d'approvisionnement, mais ne constituent pas à eux seuls un avis juridique exhaustif.

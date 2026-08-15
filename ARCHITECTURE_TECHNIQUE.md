@@ -1605,3 +1605,9 @@ Limites non masquées :
 - WAV est couvert par tests synthétiques, MP3 n'est pas couvert par un corpus réel et M4A n'est pas garanti par les formats JUCE enregistrés sous Windows ;
 - la lecture n'a pas encore été validée manuellement sur un périphérique réel ;
 - l'API d'import retourne encore `std::nullopt` sans code d'erreur détaillé.
+
+## 64. Décodage MP3 isolé - T-101.8
+
+Le chemin `.mp3` passe d'abord par `Mp3Decoder`, adaptateur interne autour de la version épinglée de `minimp3`. Le décodeur lit les trames par blocs, valide le nombre de canaux, le sample rate et le plafond de 30 millions de trames, puis produit directement un signal mono. Il ne conserve pas simultanément le PCM brut, une copie par canal et la copie mono. La fermeture du contexte natif est garantie par RAII, y compris en cas d'exception d'allocation.
+
+Si `minimp3` refuse un fichier portant l'extension `.mp3`, l'importeur peut tenter le lecteur JUCE. Ce repli n'est jamais utilisé pour une autre extension, afin d'éviter qu'un contenu soit décodé par hasard puis étiqueté avec le mauvais format. Le M4A reste absent : l'énumération `AudioFormat::M4a` exprime une cible de modèle, pas une capacité disponible.

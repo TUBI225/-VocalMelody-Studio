@@ -23,9 +23,24 @@ if(TARGET VocalMelody::Audio)
     add_executable(VocalMelodyAudioImporterTests unit/AudioImporterTests.cpp)
 
     target_link_libraries(VocalMelodyAudioImporterTests PRIVATE VocalMelody::Audio)
+    target_compile_definitions(
+        VocalMelodyAudioImporterTests
+        PRIVATE VOCALMELODY_MP3_TEST_VECTOR="${minimp3_SOURCE_DIR}/vectors/l3-sin1k0db.bit"
+    )
     vocalmelody_enable_warnings(VocalMelodyAudioImporterTests)
 
     add_test(NAME audio.file_import COMMAND VocalMelodyAudioImporterTests)
+
+    add_executable(VocalMelodyMp3Tests unit/Mp3DecoderTests.cpp)
+
+    target_link_libraries(VocalMelodyMp3Tests PRIVATE VocalMelody::Audio)
+    target_compile_definitions(
+        VocalMelodyMp3Tests
+        PRIVATE VOCALMELODY_MP3_TEST_VECTOR="${minimp3_SOURCE_DIR}/vectors/l3-sin1k0db.bit"
+    )
+    vocalmelody_enable_warnings(VocalMelodyMp3Tests)
+
+    add_test(NAME audio.mp3_decoder COMMAND VocalMelodyMp3Tests)
 
     add_executable(VocalMelodyAudioMetadataTests unit/AudioMetadataTests.cpp)
 

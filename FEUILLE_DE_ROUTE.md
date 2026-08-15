@@ -1237,22 +1237,22 @@ Travail restant :
 T-101 - Implémenter l'Audio Frontend
 Statut : PARTIEL
 Priorité : CRITIQUE
-Dépendances : T-001 terminée, JUCE 8.0.15, décision de codec M4A/MP3 encore ouverte
+Dépendances : T-001 terminée, JUCE 8.0.15, minimp3 épinglé pour MP3 ; décision de codec M4A encore ouverte
 Critères de validation :
 - [VALIDÉ] import WAV, mono et stéréo, sample rates différents ;
 - [VALIDÉ] détection durée, silence, clipping, niveau et bruit approximatif ;
 - [VALIDÉ] métadonnées JSON et preuve que l'original n'est pas modifié pendant les tests ;
 - [VALIDÉ] fichiers WAV vide, une trame, 30 secondes, multicanal et tronqué sans crash ;
-- [VALIDÉ] builds et CTest locaux Debug/Release, 5/5 tests ;
+- [VALIDÉ] builds et CTest locaux Debug/Release, 6/6 tests après intégration MP3 ;
 - [VALIDÉ SUR `58e96e7`] CI Pull Request #2 verte ;
 - [VALIDÉ] CI des corrections T-101.4/T-101.5 : run `31854004303`, Debug et Release réussis ;
-- [NON VALIDÉ] corpus MP3 réel ;
+- [VALIDÉ LOCALEMENT] décodeur MP3 sur un vecteur Layer III réel et non silencieux fourni par la dépendance épinglée ; corpus musical/utilisateur et CI encore requis ;
 - [NON IMPLÉMENTÉ/GARANTI] décodage M4A Windows ;
 - [VALIDÉ COMME BASELINE] rééchantillonnage mono linéaire à 16 kHz, borné et testé ; qualité pitch/anti-repliement non validée ;
 - [NON EXÉCUTÉ] lecture interactive sur périphérique audio réel.
 
 Travail restant :
-- choisir et auditer la stratégie de codec MP3/M4A (Media Foundation adapté, FFmpeg ou autre) ;
+- compléter la preuve MP3 par un corpus musical/utilisateur et la CI ; choisir et auditer séparément la stratégie M4A (Media Foundation adapté, FFmpeg ou autre) ;
 - remplacer ou valider la baseline de rééchantillonnage par benchmark avec anti-repliement et implémenter l'analyse par blocs pour les fichiers longs ;
 - exposer des erreurs d'import détaillées à l'interface ;
 - exécuter le corpus réel et la validation manuelle de lecture ;

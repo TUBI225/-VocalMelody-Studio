@@ -4,7 +4,7 @@ Application Windows de génération de mélodies, d'accords et d'arrangements à
 
 ## État
 
-La phase 0 est terminée et la phase 1 Audio Frontend est en cours sur `phase1/audio-frontend` (Pull Request #2). L'application importe et analyse des WAV, rééchantillonne le flux mono à 16 kHz, produit des métadonnées JSON et contient un transport de lecture JUCE. Les builds Debug/Release, les 5 tests CTest locaux et la CI Windows du commit `7b24b76` réussissent. Cette validation n'est pas exhaustive : le rééchantillonneur linéaire est une baseline pour les diagnostics, pas encore un choix validé pour le pitch ; la lecture réelle et un corpus MP3/M4A restent également à valider.
+La phase 0 est terminée et la phase 1 Audio Frontend est en cours sur `phase1/audio-frontend` (Pull Request #2). L'application importe et analyse des WAV, rééchantillonne le flux mono à 16 kHz, produit des métadonnées JSON et contient un transport de lecture JUCE. Un décodeur MP3 `minimp3` épinglé est intégré et validé localement avec un vecteur Layer III réel ; sa CI et un corpus musical/utilisateur restent à valider. Le M4A n'est pas implémenté. Le rééchantillonneur linéaire reste une baseline pour les diagnostics, pas encore un choix validé pour le pitch.
 
 ## Documentation permanente
 
@@ -58,4 +58,4 @@ Get-ChildItem src,tests -Recurse -File -Include *.cpp,*.h |
 
 Le premier `cmake --preset` télécharge l'archive JUCE vérifiée (~23 Mo). Sur un poste sans accès réseau fiable à GitHub, télécharger et extraire l'archive puis configurer avec `-DFETCHCONTENT_SOURCE_DIR_JUCE=<dossier>`. La CI s'exécute à chaque Pull Request et à chaque push sur `main`.
 
-Limite actuelle importante : sous Windows, la configuration JUCE retenue décode le WAV et peut s'appuyer sur Windows Media pour le MP3, mais elle ne fournit pas de décodeur M4A garanti. Aucun support MP3/M4A ne doit être annoncé comme validé avant un corpus réel et une décision de codec (par exemple Media Foundation adapté ou FFmpeg audité juridiquement).
+Limite actuelle importante : le chemin MP3 dédié passe par `minimp3`, avec repli JUCE réservé aux fichiers `.mp3`. Cette preuve locale ne remplace pas un corpus musical/utilisateur ni la CI. La configuration JUCE retenue ne fournit pas de décodeur M4A : aucun support M4A ne doit être annoncé avant une décision de codec et son audit.

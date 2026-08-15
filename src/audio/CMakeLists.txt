@@ -1,6 +1,7 @@
 add_library(vocalmelody_audio STATIC
     AudioFileImporter.cpp
     AudioMetadataSerializer.cpp
+    Mp3Decoder.cpp
 )
 add_library(VocalMelody::Audio ALIAS vocalmelody_audio)
 
@@ -15,6 +16,7 @@ target_link_libraries(
     PUBLIC
         VocalMelody::Common
         VocalMelody::Frontend
+        VocalMelody::Minimp3
         juce::juce_audio_formats
         juce::juce_audio_basics
         juce::juce_cryptography

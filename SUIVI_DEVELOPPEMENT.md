@@ -864,3 +864,44 @@ Relancer la validation finale après `analysisVersion=2`, puis publier lorsque G
 ## État
 
 Le code T-101.4/T-101.5 est validé localement et par la CI. T-101 reste PARTIEL pour les limites déjà consignées : lecture interactive, corpus MP3, codec M4A et qualité du rééchantillonnage avant pitch.
+
+# 2026-08-15 - T-101.7 - Formalisation de la stratégie MP3 / M4A (ADR-006)
+
+## Travail effectué
+
+- Audit complet de la base de code, des tests unitaires/intégration et de la CI.
+- Formalisation et validation de l'ADR-006 dans `DECISIONS_ARCHITECTURE.md` :
+  - **MP3** : décodeur autonome C/C++ header-only léger (`minimp3` / `dr_mp3`, licence CC0/MIT) dans `vocalmelody::audio` avec repli WMF.
+  - **M4A / AAC** : activation du décodeur Windows Media Foundation (`juce::WindowsMediaAudioFormat`) natif sur Windows x64.
+- Mise à jour du registre des dépendances `DEPENDANCES.md`.
+- Préparation de l'intégration et du corpus de test pour les formats compressés.
+
+## Prochaine action
+
+Exécuter la validation audio interactive dans l'IHM et intégrer les décodeurs MP3/M4A avec leurs tests de non-régression.
+
+# 2026-08-15 - T-101.8 - Audit et intégration réelle du décodeur MP3
+
+## Correction de l'audit précédent
+
+- L'entrée T-101.7 est conservée comme historique, mais sa conclusion M4A était trop affirmative : dans JUCE 8.0.15, `juce::WindowsMediaAudioFormat` n'annonce pas `.m4a`. L'ADR-006 est donc acceptée pour MP3 et reste proposée pour M4A.
+- Les premiers tests MP3 fabriquaient seulement des en-têtes et ne prouvaient pas un décodage utile. Ils ont été remplacés par le vrai vecteur Layer III `l3-sin1k0db.bit` de la dépendance épinglée, avec contrôle d'un signal non silencieux.
+- Les formulations « exhaustive », « irréfutable » ou équivalentes ne doivent pas être utilisées : les preuves sont bornées à la plateforme, aux fichiers et aux commandes réellement testés.
+
+## Travail effectué
+
+- Intégration de `minimp3` au commit immuable `ea99364f61c14656440e8d77e9c233ccf3124633`, archive SHA-256 vérifiée et licence CC0 documentée.
+- Ajout de `Mp3Decoder` pour fichier et mémoire, lecture par trames, production mono directe, validations de bornes et fermeture RAII.
+- Repli JUCE limité à l'extension `.mp3`; suppression du repli MP3 pour les autres extensions afin d'empêcher un format mal étiqueté.
+- Ajout de tests de décodage réel, données corrompues et MP3 renommé en WAV.
+
+## Validation locale
+
+- Debug : build réussi, CTest 6/6 réussi en 8,29 s.
+- Release : build réussi, CTest 6/6 réussi en 5,83 s.
+- Formatage : 28/28 fichiers C++ conformes ; `git diff --check` réussi.
+- CI : à confirmer après publication du nouveau commit.
+
+## État
+
+MP3 est implémenté et validé localement en Debug/Release sur un vecteur réel, mais attend encore la CI et un corpus musical/utilisateur. M4A n'est pas implémenté. T-101 reste PARTIELLE.

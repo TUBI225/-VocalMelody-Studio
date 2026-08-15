@@ -1725,3 +1725,9 @@ Limites de modèle encore ouvertes :
 - `warnings` n'est pas encore alimenté ;
 - `AudioFormat::M4a` exprime un format visé, pas une preuve que le codec est disponible sous Windows ;
 - le schéma JSON n'a pas encore de numéro de version racine ni de migration ; il ne doit donc pas être considéré comme format projet stable.
+
+## 100. Adaptateur de décodage MP3 - T-101.8
+
+`DecodedAudioData` est une structure interne et non persistante. Elle transporte uniquement `sampleRate`, `channelCount`, `frameCount` et le signal mono nécessaire à l'analyse, afin de borner les copies mémoire. Après un décodage MP3 réussi, l'importeur crée une `AudioSource` avec `format=Mp3`. Cette valeur est attribuée seulement au chemin d'extension MP3 validé ; elle ne doit pas être inférée d'un repli de codec appliqué à une autre extension.
+
+`AudioFormat::M4a` reste une intention de schéma. Aucun objet M4A ne doit être créé tant qu'un décodeur M4A réel, testé et audité n'est pas intégré.

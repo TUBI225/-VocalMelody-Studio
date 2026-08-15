@@ -68,3 +68,10 @@ Interprétation : ces chiffres prouvent l'exécution des tests, pas la performan
 - Temps et mémoire du rééchantillonnage isolé : NON MESURÉS.
 
 Ces résultats valident le comportement fonctionnel testé, pas la qualité spectrale. Un benchmark anti-repliement, précision et coût CPU est requis avant d'utiliser cette baseline pour le pitch.
+
+## Mesures T-101.8
+
+- CTest Debug final après intégration MP3 : 6/6 tests réussis en 8,29 s.
+- CTest Release final : 6/6 tests réussis en 5,83 s.
+- Le décodeur MP3 produit directement le mono par blocs et ne conserve plus simultanément le PCM brut, des copies par canal et le mono.
+- Le pic mémoire et le temps d'import MP3 isolé ne sont pas encore mesurés ; aucune amélioration chiffrée ne doit donc être annoncée.

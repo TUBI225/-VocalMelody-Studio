@@ -67,15 +67,22 @@ Les décisions sont conservées dans l'ordre chronologique. Une décision rempla
 - Risques : copie actuelle du signal complet en mémoire et double lecture pour le SHA-256 ; une API par blocs sera nécessaire pour les fichiers longs.
 - Condition de révision : mesures montrant que les copies ou frontières de modules empêchent d'atteindre les budgets de performance.
 
-## ADR-006 - Codec M4A/MP3 Windows
+## ADR-006 - Stratégie de décodage MP3 et M4A sous Windows
 
-- Date : 2026-08-14
-- Statut : PROPOSÉE - DÉCISION REQUISE
-- Problème : `registerBasicFormats()` couvre WAV ; le MP3 dépend du codec Windows Media et M4A n'est pas garanti par la configuration JUCE Windows actuelle.
-- Options à comparer : adaptation Windows Media Foundation ; FFmpeg/libavcodec ; autre bibliothèque décodage seule ; réduction temporaire des formats annoncés.
-- Critères : licence et redistribution commerciale, maintenance, codecs réellement couverts, sécurité sur fichiers malformés, taille, fonctionnement hors ligne et tests corpus.
-- Décision provisoire : ne pas annoncer MP3/M4A comme validés et ne pas ajouter FFmpeg sans audit de licence et prototype mesuré.
-- Condition de clôture : corpus réel reproductible et décision de licence documentée.
+- Date : 2026-08-15
+- Statut : ACCEPTÉE POUR MP3 / PROPOSÉE POUR M4A
+- Problème : garantir un décodage robuste, déterministe et juridiquement sûr des fichiers compressés MP3 et M4A/AAC sous Windows x64, sans alourdir le binaire avec FFmpeg complet.
+- Options étudiées :
+  1. FFmpeg / libavcodec : complet mais lourd (plusieurs dizaines de Mo), complexe à intégrer sous Windows et risques de licences (LGPL/GPL avec brevets).
+  2. Décodeur dédié pour MP3 (`minimp3`) et adaptateur Windows Media Foundation à étudier pour M4A/AAC.
+  3. Dépendance exclusive aux codecs système Windows Media Foundation.
+- Choix retenu :
+  - **MP3** : `minimp3` au commit `ea99364f61c14656440e8d77e9c233ccf3124633`, archive contrôlée par SHA-256, licence CC0, isolé dans `vocalmelody::audio`, avec repli vers le lecteur JUCE pour les fichiers `.mp3` seulement.
+  - **M4A / AAC** : décision non finalisée. Dans JUCE 8.0.15, `juce::WindowsMediaAudioFormat` n'annonce pas `.m4a`; un adaptateur Media Foundation dédié ou un autre codec audité reste nécessaire.
+- Justification MP3 : dépendance légère, version immuable, licence identifiée et tests automatisables sans dépendre d'un codec système. Ceci ne constitue pas une garantie juridique exhaustive.
+- Conséquences : WAV et MP3 disposent d'un chemin d'import ; M4A reste explicitement non implémenté. Les tests MP3 utilisent un vecteur Layer III réel fourni par la dépendance épinglée.
+- Risques : corpus musical/utilisateur MP3 et CI du nouveau code encore à valider ; stratégie M4A, redistribution et environnements Windows N/KN à auditer avant toute annonce de support.
+- Condition de révision : exigence de portabilité macOS/Linux nécessitant une abstraction décodeur AAC multi-plateforme.
 
 ## ADR-007 - Sample rate canonique d'analyse à 16 kHz
 

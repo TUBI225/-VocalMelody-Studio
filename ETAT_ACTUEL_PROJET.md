@@ -7,12 +7,12 @@
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend en cours)
 - Plateforme cible : Windows x64
 - Branche Git : `phase1/audio-frontend` (Pull Request #2 ouverte vers `main`)
-- Dernier commit technique poussé : `7b24b76` - feat(phase1): durcit import et ajoute resampling 16 kHz
-- Dernière mise à jour : 2026-08-15 (T-101.5 validée localement ; GitHub CLI 2.97.0 installé et authentifié)
+- Dernier commit poussé : `22a8e99` - docs: trace la ci checkout node 24
+- Dernière mise à jour : 2026-08-15 (T-101.8 MP3 en validation locale ; GitHub CLI 2.97.0 installé et authentifié)
 
 ## État général
 
-La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV réel, analyse mono, diagnostics, métadonnées JSON et transport de lecture sont implémentés. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, moyenne tous les canaux, calcule un SHA-256 avant/après décodage et rejette toute modification concurrente. Les 5 tests CTest passent localement en Debug et Release ; la CI du dernier commit poussé `58e96e7` est verte. Ces preuves ne valident pas encore le code local T-101.4 tant qu'il n'est pas poussé et testé par la CI.
+La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV réel, analyse mono, diagnostics, métadonnées JSON, transport de lecture et décodage MP3 sont implémentés. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. Le code local T-101.8 passe 6/6 tests en Debug et Release ainsi que le contrôle de formatage 28/28. La CI verte du commit poussé `22a8e99` ne couvre pas encore ces changements locaux.
 
 ## Tâches par statut
 
@@ -33,11 +33,11 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 
 ## Fonctions partielles
 
-- T-101 : import/analyse WAV, rééchantillonnage mono linéaire à 16 kHz et métadonnées JSON validés ; lecture implémentée mais non testée avec un périphérique réel ; MP3 non validé sur corpus réel ; M4A non pris en charge de façon garantie par la configuration JUCE Windows.
+- T-101 : import/analyse WAV, rééchantillonnage mono linéaire à 16 kHz et métadonnées JSON validés ; décodeur MP3 `minimp3` intégré et validé localement sur un vecteur Layer III réel ; M4A non implémenté et lecture interactive à finaliser.
 
 ## Tâches en cours ou bloquées
 
-- T-101 : PARTIEL dans la Pull Request #2. Les modifications locales de durcissement T-101.4 attendent commit, push et CI.
+- T-101 : PARTIEL dans la Pull Request #2. La CI verte actuelle couvre le commit poussé précédent ; le nouveau code MP3 attend encore sa CI, un corpus musical/utilisateur et une validation interactive. M4A reste à concevoir.
 
 ## Erreurs et risques critiques
 
@@ -74,4 +74,4 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 
 ## Prochaine action recommandée
 
-Pousser T-101.4/T-101.5 et vérifier leur CI, puis choisir une stratégie de décodage M4A/MP3 juridiquement compatible et effectuer une validation manuelle de la lecture. Avant la phase pitch, comparer le rééchantillonneur linéaire à une méthode avec filtrage anti-repliement.
+Terminer la validation locale Debug/Release du décodeur MP3, pousser le changement et vérifier sa CI. Ensuite, tester un corpus musical/utilisateur, effectuer une validation manuelle de la lecture et choisir une stratégie M4A juridiquement et techniquement compatible. Avant la phase pitch, comparer le rééchantillonneur linéaire à une méthode avec filtrage anti-repliement.

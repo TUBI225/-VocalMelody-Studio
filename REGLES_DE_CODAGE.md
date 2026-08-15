@@ -46,6 +46,8 @@
 
 - Épingler les dépendances à une version ou un commit immuable.
 - Vérifier l'empreinte des archives téléchargées.
+- Documenter la licence et la source exacte de tout codec tiers ; une garantie juridique absolue ne doit pas être déduite de cette seule vérification.
+- Les tests de codec doivent décoder au moins un flux réel et contrôler le signal produit ; un simple en-tête fabriqué ne prouve pas le support du format.
 - Ne pas ajouter une dépendance de test lorsque CTest et la bibliothèque standard suffisent.
 - Les options de build du projet portent le préfixe `VOCALMELODY_`.
 - Les cibles internes sont exposées avec l'espace de noms `VocalMelody::` lorsque pertinent.

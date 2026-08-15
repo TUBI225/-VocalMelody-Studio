@@ -1,5 +1,6 @@
 #include <vocalmelody/audio/AudioFileImporter.h>
 
+#include "Mp3TestHelpers.h"
 #include "TestContext.h"
 #include "WavTestHelpers.h"
 
@@ -130,6 +131,49 @@ void testImportInvalidFile(TestContext& context) {
     context.expect(!AudioFileImporter{}.import(path).has_value(), "a non-audio file is rejected");
 }
 
+void testImportValidMp3(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+
+    const std::string path = vocalmelody::testing::tempFilePath("vms_test_import.mp3");
+    vocalmelody::testing::copyMp3TestVector(path);
+
+    const auto result = AudioFileImporter{}.import(path);
+    context.expect(result.has_value(), "a valid mp3 imports successfully");
+    if (!result.has_value()) {
+        return;
+    }
+
+    context.expect(result->source.sampleRate() > 0, "mp3 sample rate is detected");
+    context.expect(result->source.channelCount() >= 1 && result->source.channelCount() <= 2,
+                   "mp3 channel count is valid");
+    context.expect(result->source.originalFormat() == vocalmelody::common::AudioFormat::Mp3,
+                   "mp3 format is detected");
+    context.expect(result->analysis.analysisSampleRate() == AudioFileImporter::kAnalysisSampleRate,
+                   "mp3 is resampled to canonical 16 kHz for analysis");
+    context.expect(result->source.fileHash().size() == 64, "the source has a valid SHA-256 hash");
+}
+
+void testImportCorruptedMp3(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+
+    const std::string path = vocalmelody::testing::tempFilePath("vms_test_corrupted.mp3");
+    std::ofstream file(path, std::ios::binary);
+    file.write("ID3\x03\0\0\0\0\0\x20truncated_mp3_garbage_content_12345", 44);
+    file.close();
+
+    context.expect(!AudioFileImporter{}.import(path).has_value(),
+                   "a corrupted mp3 is rejected safely");
+}
+
+void testImportMp3WithWrongExtension(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+
+    const std::string path = vocalmelody::testing::tempFilePath("vms_test_mp3_renamed.wav");
+    vocalmelody::testing::copyMp3TestVector(path);
+    context.expect(!AudioFileImporter{}.import(path).has_value(),
+                   "an MP3 renamed as WAV is rejected instead of mislabelled");
+}
+
 void testImportMissingFile(TestContext& context) {
     using vocalmelody::audio::AudioFileImporter;
 
@@ -148,6 +192,9 @@ int main() {
     testImportMultichannelWav(context);
     testImportEmptyShortAndLongWav(context);
     testImportCorruptedWav(context);
+    testImportValidMp3(context);
+    testImportCorruptedMp3(context);
+    testImportMp3WithWrongExtension(context);
     testImportInvalidFile(context);
     testImportMissingFile(context);
     return context.result();

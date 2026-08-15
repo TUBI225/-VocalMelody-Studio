@@ -1,5 +1,6 @@
 #include <vocalmelody/audio/AudioFileImporter.h>
 
+#include <vocalmelody/audio/Mp3Decoder.h>
 #include <vocalmelody/frontend/SignalAnalysis.h>
 
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -28,6 +29,55 @@ namespace {
     return mono;
 }
 
+struct RawDecodedData final {
+    std::vector<float> mono;
+    int sampleRate{0};
+    int numChannels{0};
+    int bitDepth{16};
+    std::int64_t numFrames{0};
+};
+
+[[nodiscard]] std::optional<RawDecodedData> decodeWithJuce(const juce::File& file) {
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(file));
+    if (reader == nullptr) {
+        return std::nullopt;
+    }
+
+    const auto frameCount = reader->lengthInSamples;
+    const double sourceSampleRate = reader->sampleRate;
+    if (reader->numChannels == 0 ||
+        reader->numChannels > static_cast<unsigned int>(std::numeric_limits<int>::max()) ||
+        frameCount <= 0 || frameCount > AudioFileImporter::kMaxDecodedFrames ||
+        !std::isfinite(sourceSampleRate) || sourceSampleRate <= 0.0 ||
+        sourceSampleRate > static_cast<double>(std::numeric_limits<int>::max())) {
+        return std::nullopt;
+    }
+
+    const int numChannels = static_cast<int>(reader->numChannels);
+    const int numFrames = static_cast<int>(frameCount);
+    const int sampleRate = static_cast<int>(std::lround(sourceSampleRate));
+
+    juce::AudioBuffer<float> buffer(numChannels, numFrames);
+    if (!reader->read(&buffer, 0, numFrames, 0, true, true)) {
+        return std::nullopt;
+    }
+
+    return RawDecodedData{readMonoSamples(buffer), sampleRate, numChannels,
+                          static_cast<int>(reader->bitsPerSample), frameCount};
+}
+
+[[nodiscard]] std::optional<RawDecodedData> decodeWithMp3(const std::string& path) {
+    const auto mp3Result = Mp3Decoder::decodeFile(path);
+    if (!mp3Result.has_value()) {
+        return std::nullopt;
+    }
+
+    return RawDecodedData{mp3Result->monoSamples, mp3Result->sampleRate, mp3Result->channelCount,
+                          mp3Result->bitDepth, mp3Result->totalFrames};
+}
+
 } // namespace
 
 AudioFileImporter::AudioFileImporter() = default;
@@ -51,33 +101,27 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
             return std::nullopt;
         }
 
-        juce::AudioFormatManager formatManager;
-        formatManager.registerBasicFormats();
-        std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(file));
-        if (reader == nullptr) {
+        const common::AudioFormat format =
+            common::audioFormatFromExtension(file.getFileExtension().toStdString());
+
+        std::optional<RawDecodedData> decodedData;
+        if (format == common::AudioFormat::Mp3) {
+            decodedData = decodeWithMp3(path);
+            if (!decodedData.has_value()) {
+                decodedData = decodeWithJuce(file);
+            }
+        } else {
+            decodedData = decodeWithJuce(file);
+        }
+        if (!decodedData.has_value()) {
             return std::nullopt;
         }
 
-        const auto frameCount = reader->lengthInSamples;
-        const double sourceSampleRate = reader->sampleRate;
-        if (reader->numChannels == 0 ||
-            reader->numChannels > static_cast<unsigned int>(std::numeric_limits<int>::max()) ||
-            frameCount <= 0 || frameCount > kMaxDecodedFrames || !std::isfinite(sourceSampleRate) ||
-            sourceSampleRate <= 0.0 ||
-            sourceSampleRate > static_cast<double>(std::numeric_limits<int>::max())) {
-            return std::nullopt;
-        }
-
-        const int numChannels = static_cast<int>(reader->numChannels);
-        const int numFrames = static_cast<int>(frameCount);
-        const int sampleRate = static_cast<int>(std::lround(sourceSampleRate));
-
-        juce::AudioBuffer<float> buffer(numChannels, numFrames);
-        if (!reader->read(&buffer, 0, numFrames, 0, true, true)) {
-            return std::nullopt;
-        }
-
-        const std::vector<float> mono = readMonoSamples(buffer);
+        const auto& mono = decodedData->mono;
+        const int sampleRate = decodedData->sampleRate;
+        const int numChannels = decodedData->numChannels;
+        const int bitDepth = decodedData->bitDepth;
+        const auto numFrames = decodedData->numFrames;
 
         const auto sourceStats = frontend::analyzeSignal(mono, sampleRate);
         const auto analysisFrames = frontend::resampleLinear(mono, sampleRate, kAnalysisSampleRate);
@@ -117,14 +161,11 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
         if (fileHashAfterDecode != fileHashBeforeDecode) {
             return std::nullopt;
         }
-        const common::AudioFormat format =
-            common::audioFormatFromExtension(file.getFileExtension().toStdString());
 
         const auto source = common::AudioSource::create(
             "audio-" + fileHashBeforeDecode, path,
             juce::Time::getCurrentTime().toISO8601(true).toStdString(), format, sampleRate,
-            numChannels, static_cast<int>(reader->bitsPerSample), *durationSeconds,
-            fileHashBeforeDecode);
+            numChannels, bitDepth, *durationSeconds, fileHashBeforeDecode);
         if (!source.has_value()) {
             return std::nullopt;
         }
