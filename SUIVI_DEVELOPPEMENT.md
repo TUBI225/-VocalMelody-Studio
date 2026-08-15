@@ -1023,3 +1023,12 @@ La baseline couvre désormais localement sa plage annoncée aux deux bornes. Cel
 - Pull Request #4 ouverte en brouillon vers `main` ; fusion non effectuée.
 
 La correction est validée localement et en CI. Les limites fonctionnelles du benchmark consignées ci-dessus restent inchangées.
+
+## Fusion de T-102.1
+
+- Pull Request #4 passée de brouillon à prête pour révision puis fusionnée le 2026-08-15 avec historique préservé.
+- Merge commit : `41463c9` (`Merge pull request #4 from TUBI225/fix/pitch-autocorrelation-bounds`).
+- CI finale de la tête documentaire `e38dedf` : run `31893329023`, Debug et Release RÉUSSIS, 8/8 tests.
+- Branche `fix/pitch-autocorrelation-bounds` supprimée localement et sur l'origine ; `main` local synchronisé avec `origin/main`.
+
+T-102.1 est fusionnée et close. T-102 reste EN COURS pour le corpus vocal, les estimateurs cibles, les mesures et la sélection FAST/BALANCED/HIGH QUALITY.

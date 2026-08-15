@@ -144,7 +144,7 @@ Avancement du socle (T-102, 2026-08-15) :
 - interface `IPitchEstimator` et type `MonoSignal` dans `src/pitch` ;
 - structures `PitchFrame`, `PitchCandidate`, `PitchDistributionFrame` et types forts `MidiPitch`/`Cents` dans `src/common` ;
 - baseline `AutocorrelationPitchEstimator` (premier pic local de l'autocorrélation, anti biais sous-harmonique), avec bornes 80/2000 Hz inclusives couvertes par régression T-102.1 ;
-- tests CTest `pitch.structures` et `pitch.autocorrelation` (8/8 au total), build et clang-format verts ; socle fusionné dans `main`, correction T-102.1 validée localement et en CI (run `31893018165`).
+- tests CTest `pitch.structures` et `pitch.autocorrelation` (8/8 au total), build et clang-format verts ; socle et correction T-102.1 fusionnés dans `main` (PR #4, `41463c9`), CI finale verte (run `31893329023`).
 Le benchmark proprement dit (estimateurs cibles, corpus vocal et mesures ci-dessous) reste à réaliser.
 
 Tester :
