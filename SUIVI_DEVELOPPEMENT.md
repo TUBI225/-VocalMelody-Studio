@@ -978,3 +978,14 @@ Poser le socle de la phase 2 (Pitch Benchmark) sur une branche dédiée : les st
 
 T-102 : EN COURS - le socle (structures pitch + interface + baseline autocorrélation) est validé localement sur la branche `phase2/pitch-benchmark`. Le benchmark proprement dit (estimateurs RMVPE/CREPE/pYIN/YIN, corpus vocal, mesures) reste à réaliser, de préférence après le rééchantillonneur anti-repliement (R-012).
 
+## Résultat CI et fusion
+
+- Commit technique : `e71eb8b` (`feat(pitch): ajoute l'interface IPitchEstimator et les structures pitch (socle phase 2)`).
+- GitHub Actions : run `31890705017`, conclusion RÉUSSIE.
+- Windows x64 Debug : formatage, configuration, build et 8 tests réussis.
+- Windows x64 Release : formatage, configuration, build et 8 tests réussis.
+- Pull Request #3 fusionnée le 2026-08-15 (méthode `merge`, historique préservé) : merge commit `466f4cb`.
+- Branche `phase2/pitch-benchmark` supprimée (locale et distante) ; `main` local synchronisé.
+
+Le socle phase 2 est donc intégré à `main` et validé localement + CI. Le benchmark (estimateurs cibles, corpus vocal, mesures FAST/BALANCED/HIGH QUALITY) reste à réaliser.
+
