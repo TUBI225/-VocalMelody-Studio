@@ -46,14 +46,38 @@ template <typename Tag> class NonNegativeValue final {
     double value_;
 };
 
+template <typename Tag> class FiniteValue final {
+  public:
+    [[nodiscard]] static std::optional<FiniteValue> fromValue(const double value) noexcept {
+        if (!std::isfinite(value)) {
+            return std::nullopt;
+        }
+
+        return FiniteValue{value};
+    }
+
+    [[nodiscard]] constexpr double value() const noexcept { return value_; }
+
+    constexpr auto operator<=>(const FiniteValue&) const noexcept = default;
+
+  private:
+    explicit constexpr FiniteValue(const double value) noexcept : value_{value} {}
+
+    double value_;
+};
+
 struct ProbabilityTag final {};
 struct Score01Tag final {};
 struct SecondsTag final {};
 struct BeatsTag final {};
+struct MidiPitchTag final {};
+struct CentsTag final {};
 
 using Probability = UnitInterval<ProbabilityTag>;
 using Score01 = UnitInterval<Score01Tag>;
 using Seconds = NonNegativeValue<SecondsTag>;
 using Beats = NonNegativeValue<BeatsTag>;
+using MidiPitch = NonNegativeValue<MidiPitchTag>;
+using Cents = FiniteValue<CentsTag>;
 
 } // namespace vocalmelody::common

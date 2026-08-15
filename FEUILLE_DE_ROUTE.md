@@ -140,6 +140,13 @@ Critère de sortie :
 Objectif :
 ne PAS choisir RMVPE/CREPE/pYIN/YIN par intuition.
 
+Avancement du socle (T-102, 2026-08-15) :
+- interface `IPitchEstimator` et type `MonoSignal` dans `src/pitch` ;
+- structures `PitchFrame`, `PitchCandidate`, `PitchDistributionFrame` et types forts `MidiPitch`/`Cents` dans `src/common` ;
+- baseline `AutocorrelationPitchEstimator` (premier pic local de l'autocorrélation, anti biais sous-harmonique) ;
+- tests CTest `pitch.structures` et `pitch.autocorrelation` (8/8 au total), build et clang-format verts sur la branche `phase2/pitch-benchmark`.
+Le benchmark proprement dit (estimateurs cibles, corpus vocal et mesures ci-dessous) reste à réaliser.
+
 Tester :
 - RMVPE ;
 - CREPE ;
