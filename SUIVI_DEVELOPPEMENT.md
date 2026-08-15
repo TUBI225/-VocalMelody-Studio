@@ -856,7 +856,10 @@ Relancer la validation finale après `analysisVersion=2`, puis publier lorsque G
 - Version officielle la plus récente vérifiée : `actions/checkout` v7.0.1, publiée le 2026-07-20.
 - Workflow mis à jour vers le commit immuable `3d3c42e5aac5ba805825da76410c181273ba90b1`.
 - `action.yml` de ce commit vérifié : runtime `node24`.
-- Une nouvelle CI doit valider ce changement de workflow avant clôture.
+- CI de validation du workflow : RÉUSSIE, run `31854334410` sur `4d81f3b`.
+- Windows x64 Debug : RÉUSSI en 3 min 14 s.
+- Windows x64 Release : RÉUSSI en 4 min 14 s.
+- Aucun avertissement Node.js 20 observé sur ce run.
 
 ## État
 

@@ -70,7 +70,7 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 - CTest Release T-101.4 : RÉUSSI - `100% tests passed out of 5` (2,26 s, validation finale).
 - Conformité `clang-format` T-101.4 : RÉUSSIE - 24/24 fichiers C++ contrôlés.
 - Validation finale T-101.5 (`analysisVersion=2`) : Debug 5/5 en 3,74 s ; Release 5/5 en 1,69 s ; formatage 24/24 et `git diff --check` réussis.
-- CI distante de T-101.4/T-101.5 : RÉUSSIE sur `7b24b76` - run `31854004303`, Debug 3 min 36 s et Release 5 min 20 s. L'avertissement Node.js 20 observé sur l'ancien `actions/checkout` a conduit à l'épinglage de v7.0.1/Node.js 24 ; cette mise à jour attend sa propre CI.
+- CI distante de T-101.4/T-101.5 : RÉUSSIE sur `7b24b76` - run `31854004303`, Debug 3 min 36 s et Release 5 min 20 s. Mise à jour `actions/checkout` v7.0.1/Node.js 24 validée sur `4d81f3b` - run `31854334410`, Debug 3 min 14 s et Release 4 min 14 s, sans l'avertissement Node.js 20.
 
 ## Prochaine action recommandée
 
