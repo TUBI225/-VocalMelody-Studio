@@ -543,3 +543,374 @@ T-001 TERMINÉ - phase 0 clôturée.
 - Décider du régime de licence JUCE (R-008) avant distribution.
 - Engager la phase 1 (Audio Frontend) conformément à la feuille de route.
 
+# 2026-08-14 - T-101 - Socle de la phase 1 : Audio Frontend
+
+## Objectif
+
+Démarrer la phase 1 (Audio Frontend) par son socle : structures de données du domaine (AudioSource, AudioAnalysisResult) et analyse de signal pure, testable sans JUCE.
+
+## Travail effectué
+
+- Nouveau module `src/frontend` (analyse de signal indépendante de JUCE) :
+  - `SignalAnalysis` : RMS, peak, score de clipping, ratio de silence, détection de segments de silence, estimation du plancher de bruit, downmix stéréo vers mono.
+- Structures de domaine dans `src/common` (conformes à MODELISATION_DONNEES) :
+  - `AudioSource` (id, chemin original, date d'import, format, sample rate, canaux, bit depth, durée, hash du fichier — immuable, validation par factory `create`).
+  - `AudioAnalysisResult` (id de source, version d'analyse, durée, sample rate d'analyse, chemin mono, scores clipping/bruit/présence vocale/qualité en `Score01`, carte de silence, avertissements).
+  - `SilenceSegment` (plage `Seconds` début/fin, validée).
+  - `AudioFormat` (Unknown/Wav/Mp3/M4a) avec conversion depuis l'extension.
+- `vocalmelody_common` passe de `INTERFACE` à `STATIC` (sources `.cpp`).
+- Refactor : `TestContext` partagé dans `tests/unit/TestContext.h`.
+- Tests : `frontend.signal_analysis` (signal vide, sample rate invalide, constant, clipping, silence, segments, bruit, downmix) + `common.strong_types` conservé.
+
+## Fichiers créés
+
+- `src/frontend/CMakeLists.txt`
+- `src/frontend/include/vocalmelody/frontend/SignalAnalysis.h`
+- `src/frontend/SignalAnalysis.cpp`
+- `src/common/include/vocalmelody/common/AudioSource.h`
+- `src/common/include/vocalmelody/common/AudioAnalysisResult.h`
+- `src/common/AudioSource.cpp`
+- `src/common/AudioAnalysisResult.cpp`
+- `tests/unit/TestContext.h`
+- `tests/unit/SignalAnalysisTests.cpp`
+
+## Fichiers modifiés
+
+- `CMakeLists.txt` (add_subdirectory src/frontend)
+- `src/common/CMakeLists.txt` (INTERFACE -> STATIC)
+- `tests/CMakeLists.txt` (test frontend.signal_analysis)
+- `tests/unit/StrongTypesTests.cpp` (TestContext partagé)
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI - `vocalmelody_common.lib`, `vocalmelody_frontend.lib`, `VocalMelodyFrontendTests.exe`, application (`/W4 /WX`, aucune erreur ni avertissement).
+- CTest Debug : RÉUSSI - `100% tests passed out of 2` (`common.strong_types` 0,01 s ; `frontend.signal_analysis` 0,79 s).
+- Build Release : lancé (résultat à confirmer).
+- Conformité `clang-format` : RÉUSSIE - 14/14 fichiers.
+
+## Décisions prises
+
+- Le socle de l'Audio Frontend est conçu indépendant de JUCE (analyse pure des trames mono) afin de rester testable et conforme aux règles de codage (« les tests ne doivent pas dépendre de JUCE lorsqu'ils vérifient uniquement le domaine commun »).
+- Le décodage de fichiers WAV/MP3/M4A et la lecture (fonctions de la phase 1) viendront dans les prochaines étapes, adossés à JUCE (`juce_audio_formats`).
+
+## État final de la tâche
+
+PARTIEL - socle du frontend compilé et testé en Debug ; lecture/import réels à venir.
+
+## Travail restant
+
+- Importer/valider des fichiers réels (WAV/MP3/M4A) via JUCE.
+- Alimenter `AudioSource` et `AudioAnalysisResult` depuis les fichiers décodés.
+- Tests d'intégration « import -> analyse -> sauvegarde metadata ».
+- Valider le Release localement et via la CI.
+
+# 2026-08-14 - T-101.1 - Import audio WAV via JUCE
+
+## Objectif
+
+Décoder et importer de vrais fichiers audio et produire `AudioSource` + `AudioAnalysisResult` à partir du fichier décodé.
+
+## Travail effectué
+
+- Nouveau module `src/audio` (bibliothèque liée à JUCE) :
+  - `AudioFileImporter` : décodage via `juce::AudioFormatManager`/`AudioFormatReader`, lecture des trames, downmix stéréo vers mono (`SignalAnalysis::downmixToMono`), calcul des diagnostics (`analyzeSignal`, `detectSilenceSegments`, `estimateNoiseFloor`), hachage FNV-1a du fichier, production de `AudioSource` et `AudioAnalysisResult`.
+- Correction : `audioFormatFromExtension` ignore désormais un point initial (`.wav` -> `wav`) ; sans cela, l'extension retournée par JUCE (avec point) produisait `AudioFormat::Unknown` et l'import était rejeté.
+- Tests `audio.file_import` : génération de WAV PCM 16 bits en mémoire (mono 44,1 kHz ; stéréo 22,05 kHz), fichier non-audio rejeté, fichier manquant rejeté.
+
+## Fichiers créés
+
+- `src/audio/CMakeLists.txt`
+- `src/audio/include/vocalmelody/audio/AudioFileImporter.h`
+- `src/audio/AudioFileImporter.cpp`
+- `tests/unit/AudioImporterTests.cpp`
+
+## Fichiers modifiés
+
+- `CMakeLists.txt` (add_subdirectory src/audio dans le bloc JUCE)
+- `tests/CMakeLists.txt` (test audio.file_import, conditionné à la disponibilité de JUCE)
+- `src/common/AudioSource.cpp` (audioFormatFromExtension tolère le point initial)
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI - `vocalmelody_audio.lib` et `VocalMelodyAudioImporterTests.exe` (`/W4 /WX`, aucune erreur ni avertissement applicatif).
+- CTest Debug : RÉUSSI - `100% tests passed out of 3` (`common.strong_types`, `frontend.signal_analysis`, `audio.file_import`).
+- Build Release : lancé (résultat à confirmer).
+- Conformité `clang-format` : RÉUSSIE.
+
+## Décisions prises
+
+- Le décodage de fichiers est isolé dans `src/audio` (dépend de JUCE), tandis que l'analyse de signal reste pure (`src/frontend`, sans JUCE). Les tests de l'import dépendent de JUCE (couche audio, pas le domaine commun).
+- L'import prend en charge WAV/MP3/M4A selon les formats enregistrés par `registerBasicFormats` (décodage WAV vérifié par tests ; MP3/M4A à valider avec un corpus réel).
+
+## État final de la tâche
+
+PARTIEL - import WAV validé ; lecture audio et corpus réel (MP3/M4A) à venir.
+
+## Travail restant
+
+- Valider le Release localement et via la CI.
+- Lecture audio dans l'application (transport).
+- Corpus de test réel (MP3/M4A, fichiers longs, corrompus) et tests d'intégration « import -> analyse -> sauvegarde metadata ».
+
+# 2026-08-14 - T-101.2 - Lecture audio dans l'application
+
+## Objectif
+
+Permettre l'import d'un fichier audio depuis l'application et sa lecture (transport), avec affichage des diagnostics.
+
+## Travail effectué
+
+- `MainComponent` enrichi :
+  - bouton « Importer... » (FileChooser, filtres *.wav;*.mp3;*.m4a) ;
+  - import via `AudioFileImporter` (VocalMelody::Audio) ;
+  - lecture via `AudioDeviceManager`, `AudioSourcePlayer` et `AudioTransportSource` (modules JUCE `juce_audio_devices`, `juce_audio_utils`) ;
+  - bouton « Lecture / Pause » ;
+  - affichage des diagnostics : format, sample rate, canaux, durée, scores de clipping/silence/qualité, nombre de segments de silence.
+- `src/app/CMakeLists.txt` : liens ajoutés (VocalMelody::Audio, juce_audio_devices, juce_audio_utils).
+
+## Fichiers modifiés
+
+- `src/app/MainComponent.h`
+- `src/app/MainComponent.cpp`
+- `src/app/CMakeLists.txt`
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI - application `VocalMelody Studio.exe` compilée avec les modules audio (`/W4 /WX`, aucune erreur ni avertissement applicatif).
+- CTest Debug : RÉUSSI - `100% tests passed out of 3`.
+- Lecture interactive : NON TESTÉE (nécessite un périphérique audio et une validation manuelle).
+- Conformité `clang-format` : RÉUSSIE.
+
+## Décisions prises
+
+- L'import produit deux flux indépendants : les diagnostics via `AudioFileImporter` (domaine) et le transport de lecture via JUCE (lecteur dédié), afin de ne pas coupler le domaine au décodage.
+- L'audio original n'est jamais modifié : l'analyse lit le fichier, la lecture utilise un lecteur séparé sur le même fichier.
+
+## État final de la tâche
+
+PARTIEL - import + lecture implémentés (à valider manuellement) ; corpus réel et métadonnées à venir.
+
+## Travail restant
+
+- Validation manuelle de la lecture (périphérique audio).
+- Corpus de test réel (MP3/M4A, fichiers longs, corrompus) et tests d'intégration « import -> analyse -> sauvegarde metadata ».
+- Validation Release et CI (run à suivre).
+
+# 2026-08-14 - T-101.3 - Corpus de tests d'intégration et métadonnées JSON
+
+## Objectif
+
+Étendre les tests d'intégration à un corpus de signaux variés et sérialiser les métadonnées d'import (AudioSource + AudioAnalysisResult) en JSON.
+
+## Travail effectué
+
+- Sérialiseur JSON dans le domaine commun (`JsonWriter`) : objets, tableaux, clés/valeurs, échappement des chaînes, nombres, booléens, null — sans dépendance externe, testé.
+- Sérialisation des métadonnées audio (`src/audio`) : `audioMetadataToJson(AudioImportResult)` et `saveAudioMetadata(result, path)` (source + analyse, segments de silence, avertissements).
+- Tests d'intégration `audio.metadata` (corpus) :
+  - WAV mono 44,1 kHz et stéréo 22,05 kHz, signaux constant, silencieux et écrêté (clipping) ;
+  - diagnostics fiables (clipping détecté, silence détecté) ;
+  - sérialisation JSON vérifiée (champs attendus) ;
+  - sauvegarde du fichier de métadonnées et relecture ;
+  - **fichier audio original jamais modifié** (hash FNV-1a avant/après import).
+- Refactor : helpers de test partagés `WavTestHelpers.h` (écriture WAV, chemins temporaires, hash FNV-1a), utilisés par les tests d'import et de métadonnées.
+
+## Corrections apportées
+
+- `JsonWriter` : la virgule est gérée par la clé (et non la valeur) et supprimée après `:` ; ajout d'une surcharge `value(const char*)` pour éviter la conversion implicite des littéraux en `bool`.
+
+## Fichiers créés
+
+- `src/common/include/vocalmelody/common/JsonWriter.h`
+- `src/common/JsonWriter.cpp`
+- `src/audio/include/vocalmelody/audio/AudioMetadataSerializer.h`
+- `src/audio/AudioMetadataSerializer.cpp`
+- `tests/unit/JsonWriterTests.cpp`
+- `tests/unit/AudioMetadataTests.cpp`
+- `tests/unit/WavTestHelpers.h`
+
+## Fichiers modifiés
+
+- `src/common/CMakeLists.txt`, `src/audio/CMakeLists.txt`, `tests/CMakeLists.txt`
+- `tests/unit/AudioImporterTests.cpp` (helpers partagés)
+
+## Tests exécutés
+
+- Build Debug : RÉUSSI (`/W4 /WX`, aucune erreur ni avertissement applicatif).
+- CTest Debug : RÉUSSI - `100% tests passed out of 5` (strong_types, json_writer, signal_analysis, file_import, metadata).
+- Build Release : lancé (résultat à confirmer).
+- Conformité `clang-format` : RÉUSSIE.
+
+## État final de la tâche
+
+PARTIEL - corpus de tests d'intégration et métadonnées JSON en place ; validation manuelle de la lecture et corpus réel (MP3/M4A) restants.
+
+## Travail restant
+
+- Validation manuelle de la lecture (périphérique audio).
+- Corpus réel (MP3/M4A, fichiers longs, corrompus).
+- Validation Release et CI (run à suivre).
+
+# 2026-08-14 - T-101.4 - Audit, durcissement de l'import et validation Debug/Release
+
+## Objectif
+
+Vérifier l'état réel de la branche et de la CI, corriger les défauts observables de l'import audio, étendre le corpus demandé par la feuille de route et remettre les documents permanents en cohérence sans présenter l'audit comme exhaustif ou irréfutable.
+
+## État vérifié avant modification
+
+- Branche `phase1/audio-frontend`, commit poussé `58e96e7`, Pull Request #2 ouverte et fusionnable.
+- CI du commit `58e96e7` : RÉUSSIE, run `31809979210`, événement `pull_request`.
+- Outils présents : CMake/CTest 4.4.2, MSVC 19.44, clang-format et clang-tidy 19.1.5 dans Visual Studio, Git 2.55.0.
+- Outils absents : GitHub CLI (`gh`) et FFmpeg ; ils ne sont pas requis pour le build WAV actuel.
+
+## Défauts et limites trouvés
+
+- Import complet en mémoire sans plafond ; conversion vers `int` avant contrôle ; retour du décodeur ignoré.
+- Downmix limité aux deux premiers canaux ; date d'import fixe ; hash FNV-1a trop faible pour l'intégrité.
+- Fonctions allouantes marquées `noexcept`, callback asynchrone capturant `this`, erreur du périphérique audio ignorée.
+- JSON pouvant émettre NaN/Infinity.
+- M4A non garanti sous Windows, MP3 non testé sur corpus réel, rééchantillonnage absent, lecture interactive non exécutée et erreur d'import générique.
+
+## Corrections effectuées
+
+- Plafonds de 1 Gio et 30 millions de trames ; validation avant allocation et contrôle du retour de lecture.
+- Downmix de tous les canaux.
+- SHA-256 avant/après décodage avec rejet d'une modification concurrente ; identifiant `audio-<sha256>` ; horodatage ISO 8601 runtime.
+- Exceptions converties en échec d'import ; retrait des `noexcept` incorrects.
+- `SafePointer` dans le sélecteur et lecture désactivée sans périphérique audio.
+- NaN/infini JSON sérialisés en `null`.
+- Ajout de `juce_cryptography`, issu du même JUCE 8.0.15 épinglé.
+
+## Tests ajoutés et exécutés
+
+- WAV vide, une trame, mono 30 secondes, trois canaux et WAV tronqué.
+- SHA-256, identifiant contenu, timestamp runtime, NaN/infini JSON.
+- Build Debug : RÉUSSI ; CTest Debug final : 5/5, 4,25 s.
+- Build Release : RÉUSSI ; CTest Release final : 5/5, 2,26 s.
+- `clang-format --dry-run --Werror` : RÉUSSI, 24/24 fichiers C++.
+- `git diff --check` : RÉUSSI.
+- CI du code T-101.4 : NON ENCORE EXÉCUTÉE avant commit/push.
+
+## Contrôle documentaire
+
+- Les 13 documents permanents ont été relus dans l'ordre imposé.
+- Cahier des charges : préservé ; documents d'état, route, architecture, décisions, règles, dépendances, modèle, sécurité, risques, performances et reprise : actualisés selon leur but.
+- README : actualisé avec les commandes et les limites codec.
+
+## État final
+
+T-101 reste PARTIEL. Les preuves couvrent le WAV automatisé mais pas le rééchantillonnage, M4A, le corpus MP3 réel, la lecture interactive ni la reprise après interruption.
+
+## Prochaine action
+
+Committer et pousser T-101.4, vérifier la CI de la Pull Request #2, puis traiter ADR-006 et le rééchantillonnage.
+
+# 2026-08-14 - T-101.5 - Rééchantillonnage canonique d'analyse
+
+## Décision sur le code Python fourni
+
+Les deux parties reçues constituent un installateur Python de phase 0. Elles ne sont pas intégrées : elles créeraient un second projet `VIRE/`, dupliqueraient les documents permanents et réintroduiraient des états faux (`Git non initialisé`, CI reportée, phase 0 en cours). L'idée d'un prototype Python reste pertinente uniquement pour les futurs benchmarks isolés autorisés par ADR-002.
+
+## Travail effectué
+
+- Ajout de `frontend::resampleLinear`, rééchantillonneur pur, déterministe et borné.
+- Sample rate canonique d'analyse fixé à 16 kHz.
+- Diagnostics de silence, bruit et présence vocale calculés sur le flux rééchantillonné ; clipping conservé sur les trames source.
+- Cas d'une seule trame garanti par une sortie minimale d'une trame.
+- `analysisVersion` incrémentée de 1 à 2 et test JSON adapté.
+- ADR-007 et risque R-012 ajoutés : l'interpolation linéaire reste une baseline sans anti-repliement, non validée pour le pitch.
+
+## Tests
+
+- Premier passage Debug : ÉCHEC utile sur le WAV d'une trame ; cause identifiée (taille calculée inférieure à une trame).
+- Correction : sortie minimale d'une trame.
+- Validation finale après `analysisVersion=2` : build et CTest Debug RÉUSSIS, 5/5, 3,74 s ; build et CTest Release RÉUSSIS, 5/5, 1,69 s.
+- Formatage : RÉUSSI, 24/24 fichiers ; `git diff --check` : RÉUSSI.
+
+## État final
+
+Le critère « resampling » de phase 1 est couvert comme baseline fonctionnelle. Il n'est pas validé pour la phase pitch tant qu'un benchmark anti-repliement/qualité/CPU n'a pas comparé une méthode de meilleure qualité.
+
+## Prochaine action
+
+Relancer la validation finale après `analysisVersion=2`, puis publier lorsque GitHub CLI sera installé et authentifié. Ensuite : codec MP3/M4A ou lecture interactive selon la disponibilité du corpus et du périphérique.
+
+# 2026-08-15 - T-101.6 - Publication et CI de l'audit Audio Frontend
+
+## Travail effectué
+
+- GitHub CLI 2.97.0 installé avec `winget` et authentifié pour `TUBI225`.
+- Commit technique `7b24b76` créé puis poussé sur `phase1/audio-frontend`.
+- Pull Request #2 mise à jour automatiquement.
+- CI `31854004303` suivie jusqu'à sa conclusion réelle.
+
+## Résultats CI
+
+- Conclusion globale : RÉUSSIE.
+- Windows x64 Debug : RÉUSSI en 3 min 36 s (formatage, configure, build, 5 tests).
+- Windows x64 Release : RÉUSSI en 5 min 20 s (formatage, configure, build, 5 tests).
+- Avertissement non bloquant : `actions/checkout` v4 ciblait Node.js 20 déprécié et était forcé sur Node.js 24.
+
+## Correction de maintenance
+
+- Version officielle la plus récente vérifiée : `actions/checkout` v7.0.1, publiée le 2026-07-20.
+- Workflow mis à jour vers le commit immuable `3d3c42e5aac5ba805825da76410c181273ba90b1`.
+- `action.yml` de ce commit vérifié : runtime `node24`.
+- CI de validation du workflow : RÉUSSIE, run `31854334410` sur `4d81f3b`.
+- Windows x64 Debug : RÉUSSI en 3 min 14 s.
+- Windows x64 Release : RÉUSSI en 4 min 14 s.
+- Aucun avertissement Node.js 20 observé sur ce run.
+
+## État
+
+Le code T-101.4/T-101.5 est validé localement et par la CI. T-101 reste PARTIEL pour les limites déjà consignées : lecture interactive, corpus MP3, codec M4A et qualité du rééchantillonnage avant pitch.
+
+# 2026-08-15 - T-101.7 - Formalisation de la stratégie MP3 / M4A (ADR-006)
+
+## Travail effectué
+
+- Audit complet de la base de code, des tests unitaires/intégration et de la CI.
+- Formalisation et validation de l'ADR-006 dans `DECISIONS_ARCHITECTURE.md` :
+  - **MP3** : décodeur autonome C/C++ header-only léger (`minimp3` / `dr_mp3`, licence CC0/MIT) dans `vocalmelody::audio` avec repli WMF.
+  - **M4A / AAC** : activation du décodeur Windows Media Foundation (`juce::WindowsMediaAudioFormat`) natif sur Windows x64.
+- Mise à jour du registre des dépendances `DEPENDANCES.md`.
+- Préparation de l'intégration et du corpus de test pour les formats compressés.
+
+## Prochaine action
+
+Exécuter la validation audio interactive dans l'IHM et intégrer les décodeurs MP3/M4A avec leurs tests de non-régression.
+
+# 2026-08-15 - T-101.8 - Audit et intégration réelle du décodeur MP3
+
+## Correction de l'audit précédent
+
+- L'entrée T-101.7 est conservée comme historique, mais sa conclusion M4A était trop affirmative : dans JUCE 8.0.15, `juce::WindowsMediaAudioFormat` n'annonce pas `.m4a`. L'ADR-006 est donc acceptée pour MP3 et reste proposée pour M4A.
+- Les premiers tests MP3 fabriquaient seulement des en-têtes et ne prouvaient pas un décodage utile. Ils ont été remplacés par le vrai vecteur Layer III `l3-sin1k0db.bit` de la dépendance épinglée, avec contrôle d'un signal non silencieux.
+- Les formulations « exhaustive », « irréfutable » ou équivalentes ne doivent pas être utilisées : les preuves sont bornées à la plateforme, aux fichiers et aux commandes réellement testés.
+
+## Travail effectué
+
+- Intégration de `minimp3` au commit immuable `ea99364f61c14656440e8d77e9c233ccf3124633`, archive SHA-256 vérifiée et licence CC0 documentée.
+- Ajout de `Mp3Decoder` pour fichier et mémoire, lecture par trames, production mono directe, validations de bornes et fermeture RAII.
+- Repli JUCE limité à l'extension `.mp3`; suppression du repli MP3 pour les autres extensions afin d'empêcher un format mal étiqueté.
+- Ajout de tests de décodage réel, données corrompues et MP3 renommé en WAV.
+
+## Validation locale
+
+- Debug : build réussi, CTest 6/6 réussi en 8,29 s.
+- Release : build réussi, CTest 6/6 réussi en 5,83 s.
+- Formatage : 28/28 fichiers C++ conformes ; `git diff --check` réussi.
+- CI : à confirmer après publication du nouveau commit.
+
+## État
+
+MP3 est implémenté et validé localement en Debug/Release sur un vecteur réel, mais attend encore la CI et un corpus musical/utilisateur. M4A n'est pas implémenté. T-101 reste PARTIELLE.
+
+## Résultat CI après publication
+
+- Commit technique : `b89c053` (`feat(audio): ajoute le décodage MP3 vérifié`).
+- GitHub Actions : run `31886309639`, conclusion RÉUSSIE.
+- Windows x64 Debug : formatage, configuration, build et 6 tests réussis.
+- Windows x64 Release : formatage, configuration, build et 6 tests réussis.
+
+La preuve MP3 couvre désormais les builds locaux et la CI sur le vecteur Layer III épinglé. Le corpus musical/utilisateur, la lecture interactive et le M4A restent ouverts ; T-101 reste PARTIELLE.

@@ -24,7 +24,10 @@ target_link_libraries(
     VocalMelodyStudio
     PRIVATE
         VocalMelody::Common
+        VocalMelody::Audio
         juce::juce_gui_extra
+        juce::juce_audio_devices
+        juce::juce_audio_utils
     PUBLIC
         juce::juce_recommended_config_flags
 )

@@ -22,6 +22,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(VocalMelodyWarnings)
 
 add_subdirectory(src/common)
+add_subdirectory(src/frontend)
 
 if(VOCALMELODY_BUILD_APP)
     FetchContent_Declare(
@@ -31,7 +32,20 @@ if(VOCALMELODY_BUILD_APP)
         DOWNLOAD_EXTRACT_TIMESTAMP OFF
     )
     FetchContent_MakeAvailable(JUCE)
+
+    FetchContent_Declare(
+        minimp3
+        URL https://github.com/lieff/minimp3/archive/ea99364f61c14656440e8d77e9c233ccf3124633.tar.gz
+        URL_HASH SHA256=5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34
+        DOWNLOAD_EXTRACT_TIMESTAMP OFF
+    )
+    FetchContent_MakeAvailable(minimp3)
+    add_library(vocalmelody_minimp3 INTERFACE)
+    add_library(VocalMelody::Minimp3 ALIAS vocalmelody_minimp3)
+    target_include_directories(vocalmelody_minimp3 SYSTEM INTERFACE "${minimp3_SOURCE_DIR}")
+
     add_subdirectory(src/app)
+    add_subdirectory(src/audio)
 endif()
 
 if(BUILD_TESTING)

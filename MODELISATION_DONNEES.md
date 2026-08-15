@@ -1673,9 +1673,61 @@ Types non encore implémentés :
 - `MidiPitch` ;
 - `Cents` ;
 - identifiants stables ;
-- `AudioSource` et `AudioAnalysisResult` ;
 - structures L0, L1 et L2.
 
 Validation :
-Les tests unitaires source couvrent les bornes, les valeurs négatives, NaN et l'infini.
-Ils n'ont pas encore été compilés ni exécutés faute de toolchain C++ locale.
+Les tests unitaires source couvrent les bornes, les valeurs négatives, NaN et l'infini. Ils sont compilés et exécutés (Debug et Release, CI verte) ; le test CTest `common.strong_types` passe à 100 %.
+
+======================================================================
+98. ETAT D'IMPLEMENTATION - STRUCTURES AUDIO (PHASE 1)
+======================================================================
+
+Date : 2026-08-14
+Version du code : 0.1.0
+
+Structures effectivement introduites (phase 1 - Audio Frontend) :
+
+- `AudioFormat` (enum : Unknown, Wav, Mp3, M4a) avec `audioFormatFromExtension` et `audioFormatToString`.
+- `AudioSource` : immuable, créée via `AudioSource::create` (validation : id/chemin/date/hash non vides, sample rate/canaux/bit depth positifs, format connu). Champs : id, originalPath, importedAt, originalFormat, sampleRate, channelCount, bitDepth, durationSeconds (`Seconds`), fileHash.
+- `SilenceSegment` : plage `Seconds` début/fin, créée via `SilenceSegment::create` (validation : start < end).
+- `AudioAnalysisResult` : créée via `AudioAnalysisResult::create` (validation : audioSourceId non vide, version >= 0, sample rate > 0). Champs : audioSourceId, analysisVersion, durationSeconds, analysisSampleRate, monoAnalysisPath, clippingScore (`Score01`), noiseScore (`Score01`), voicePresenceScore (`Score01`), silenceMap, qualityScore (`Score01`), warnings.
+
+Module d'analyse (indépendant de JUCE) :
+- `vocalmelody_frontend` (`src/frontend`) : analyse de trames mono — RMS, peak, score de clipping, ratio de silence, détection de segments de silence, plancher de bruit approximatif, downmix stéréo vers mono.
+
+Validation :
+- Test CTest `frontend.signal_analysis` : RÉUSSI (signal vide, sample rate invalide, constant, clipping, silence, segments, bruit, downmix).
+- Les structures `AudioSource` et `AudioAnalysisResult` correspondent aux sections 5 et 6 du présent document.
+
+Reste à implémenter (phase 1) :
+- Décodage et import réels de fichiers WAV/MP3/M4A (adossé à JUCE `juce_audio_formats`).
+- Lecture audio et production de la version mono d'analyse.
+- Alimentation réelle de `AudioAnalysisResult` (durée, sample rate, canaux, diagnostics).
+
+======================================================================
+99. ETAT D'IMPLEMENTATION - IMPORT ET METADONNEES T-101.4
+======================================================================
+
+Date : 2026-08-14
+
+La présente section actualise la section 98 :
+
+- `AudioSource` est alimentée par l'import WAV réel ; `id` vaut `audio-<sha256>` et `fileHash` contient les 64 chiffres hexadécimaux SHA-256 du contenu.
+- `importedAt` est un horodatage ISO 8601 généré au moment de l'import, et non une date fixe.
+- `AudioAnalysisResult` reçoit durée, sample rate, clipping, bruit approximatif, présence vocale, qualité et carte de silence.
+- Les métadonnées sont sérialisables en JSON ; les nombres non finis sont écrits `null` pour préserver un JSON valide.
+- Le fichier est haché avant et après décodage ; l'import échoue si le contenu change entre les deux lectures.
+
+Limites de modèle encore ouvertes :
+
+- `monoAnalysisPath` reste vide car aucun artefact mono persistant n'est encore produit ;
+- `analysisSampleRate` vaut désormais 16 000 Hz ; `analysisVersion` passe à 2 pour distinguer les résultats rééchantillonnés des métadonnées antérieures ;
+- `warnings` n'est pas encore alimenté ;
+- `AudioFormat::M4a` exprime un format visé, pas une preuve que le codec est disponible sous Windows ;
+- le schéma JSON n'a pas encore de numéro de version racine ni de migration ; il ne doit donc pas être considéré comme format projet stable.
+
+## 100. Adaptateur de décodage MP3 - T-101.8
+
+`DecodedAudioData` est une structure interne et non persistante. Elle transporte uniquement `sampleRate`, `channelCount`, `frameCount` et le signal mono nécessaire à l'analyse, afin de borner les copies mémoire. Après un décodage MP3 réussi, l'importeur crée une `AudioSource` avec `format=Mp3`. Cette valeur est attribuée seulement au chemin d'extension MP3 validé ; elle ne doit pas être inférée d'un repli de codec appliqué à une autre extension.
+
+`AudioFormat::M4a` reste une intention de schéma. Aucun objet M4A ne doit être créé tant qu'un décodeur M4A réel, testé et audité n'est pas intégré.

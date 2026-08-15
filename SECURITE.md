@@ -28,9 +28,9 @@
 
 ## État des vérifications
 
-- Analyse statique : avertissements stricts configurés ; aucun compilateur local pour les exécuter.
+- Analyse statique : MSVC 19.44 exécute `/W4 /WX` en Debug/Release ; `clang-tidy` 19.1.5 est présent dans Visual Studio mais n'est pas encore intégré au build ou à la CI.
 - Audit de dépendances : JUCE 8.0.15 et `actions/checkout` enregistrés et épinglés ; choix de licence JUCE non tranché pour la distribution.
-- Tests de fichiers hostiles : non exécutés.
+- Tests de fichiers hostiles : partiels - fichier non audio, WAV vide et WAV tronqué rejetés sans crash ; fuzzing et corpus malveillant réel non exécutés.
 - Gestion de secrets : aucun secret applicatif identifié.
 
 ## Sécurité du build - phase 0
@@ -43,3 +43,22 @@
 - Aucun secret, jeton, télémétrie ou permission système supplémentaire n'est introduit.
 
 Limite : le téléchargement de dépendance rend le premier build dépendant du réseau. Un miroir ou paquet vérifié devra être prévu avant d'exiger des builds totalement hors ligne.
+
+## Sécurité de l'import audio - T-101.4
+
+- Rejet avant décodage des fichiers absents, vides, supérieurs à 1 Gio ou annonçant plus de 30 millions de trames.
+- Vérification du retour de lecture du codec et des bornes canaux/sample rate/durée avant allocation.
+- SHA-256 calculé avant et après décodage ; un fichier modifié pendant l'opération est rejeté.
+- Toutes les exceptions à la frontière d'import sont converties en échec contrôlé.
+- Le fichier audio original est ouvert en lecture et n'est jamais réécrit par l'importeur.
+
+Limites restantes : l'import est synchrone sur le thread UI, le signal complet est chargé en mémoire sous le plafond, l'erreur affichée reste générique et aucun fuzzing des codecs n'a été exécuté. Le JSON de métadonnées est écrit directement et non encore par remplacement atomique ; il ne doit pas être utilisé comme sauvegarde projet critique.
+
+## Sécurité du décodeur MP3 - T-101.8
+
+- `minimp3` est épinglé au commit `ea99364f61c14656440e8d77e9c233ccf3124633` et son archive est contrôlée par SHA-256 ; sa licence CC0 est enregistrée dans `DEPENDANCES.md`.
+- L'entrée conserve le plafond de 1 Gio ; le résultat est limité à 30 millions de trames, un ou deux canaux, un sample rate positif et un nombre d'échantillons divisible par le nombre de canaux.
+- Le décodage doit être complet et sans erreur ; les ressources natives sont libérées par RAII.
+- Les tests couvrent un vrai vecteur Layer III non silencieux, la mémoire, le fichier, les données corrompues et une extension trompeuse.
+
+Limites restantes : aucun fuzzing ni corpus utilisateur hostile n'a encore été exécuté. Le statut CC0 et l'épinglage réduisent le risque de chaîne d'approvisionnement, mais ne constituent pas à eux seuls un avis juridique exhaustif.

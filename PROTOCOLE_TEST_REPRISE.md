@@ -2,9 +2,9 @@
 
 ## Portée actuelle
 
-Aucune opération de reprise n'est implémentée. Tous les scénarios ci-dessous sont définis mais NON EXÉCUTÉS. Résultat inconnu.
+Aucune opération de reprise n'est implémentée. L'import/analyse audio et l'écriture de métadonnées existent désormais, mais restent synchrones et sans point de reprise. Tous les scénarios ci-dessous restent NON EXÉCUTÉS ; leur résultat est inconnu.
 
-Contrôle du 2026-08-14 pour T-001 : VÉRIFIÉ - NON CONCERNÉ. Le socle créé ne réalise encore aucune analyse, sauvegarde, conversion ou export interruptible. Les scénarios PR-001 à PR-003 restent inchangés et NON EXÉCUTÉS.
+Contrôle du 2026-08-14 pour T-101.4 : CONCERNÉ. PR-001 s'applique à l'analyse d'un fichier long et PR-003 à l'écriture JSON ; aucun des deux n'a été exécuté. `saveAudioMetadata` écrit directement la destination et n'offre pas encore de remplacement atomique : ces métadonnées ne doivent pas être traitées comme sauvegarde projet fiable.
 
 ## PR-001 - Interruption d'une analyse audio
 
