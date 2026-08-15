@@ -67,7 +67,8 @@ void MainComponent::resized() {
 void MainComponent::chooseFileToImport() {
     fileChooser_ = std::make_unique<juce::FileChooser>(
         "Choisir un fichier audio", juce::File::getSpecialLocation(juce::File::userHomeDirectory),
-        "*.wav;*.mp3;*.m4a");
+        // M4A n'est pas encore pris en charge par l'import : seuls WAV et MP3 sont proposés.
+        "*.wav;*.mp3");
     juce::Component::SafePointer<MainComponent> safeThis(this);
     fileChooser_->launchAsync(juce::FileBrowserComponent::openMode |
                                   juce::FileBrowserComponent::canSelectFiles,

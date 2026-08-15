@@ -32,9 +32,9 @@ Le cahier détaillé du moteur VIRE est conservé dans `docs/CAHIER_LOGIQUE_MOTE
 - Visual Studio 2022 Build Tools avec le composant C++
 - CMake 3.24 ou supérieur
 - Git 2.55 ou supérieur recommandé
-- Accès réseau au premier configure pour récupérer l'archive JUCE vérifiée
+- Accès réseau au premier configure pour récupérer les archives vérifiées (JUCE et minimp3)
 
-JUCE 8.0.15 est épinglé par commit et empreinte SHA-256. Avant toute distribution, choisir et documenter l'utilisation sous AGPLv3 ou sous licence JUCE commerciale.
+JUCE 8.0.15 et minimp3 (licence CC0) sont épinglés par commit et empreinte SHA-256. Avant toute distribution, choisir et documenter l'utilisation de JUCE sous AGPLv3 ou sous licence JUCE commerciale.
 
 ## Construire et tester
 
