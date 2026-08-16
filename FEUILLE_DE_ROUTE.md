@@ -1255,12 +1255,12 @@ Critères de validation :
 - [VALIDÉ] CI des corrections T-101.4/T-101.5 : run `31854004303`, Debug et Release réussis ;
 - [VALIDÉ LOCALEMENT ET EN CI] décodeur MP3 sur un vecteur Layer III réel et non silencieux fourni par la dépendance épinglée ; corpus musical/utilisateur encore requis ;
 - [NON IMPLÉMENTÉ/GARANTI] décodage M4A Windows ;
-- [VALIDÉ COMME BASELINE] rééchantillonnage mono linéaire à 16 kHz, borné et testé ; qualité pitch/anti-repliement non validée ;
+- [VALIDÉ LOCALEMENT] rééchantillonnage mono sinc/Blackman polyphasé à 16 kHz, borné, passband 1 kHz conservée et stopband 12 kHz atténuée en 48→16 kHz ; corpus vocal et benchmark pitch encore requis ;
 - [NON EXÉCUTÉ] lecture interactive sur périphérique audio réel.
 
 Travail restant :
 - compléter la preuve MP3 par un corpus musical/utilisateur et la CI ; choisir et auditer séparément la stratégie M4A (Media Foundation adapté, FFmpeg ou autre) ;
-- remplacer ou valider la baseline de rééchantillonnage par benchmark avec anti-repliement et implémenter l'analyse par blocs pour les fichiers longs ;
+- compléter le benchmark du rééchantillonneur filtré sur chirps/corpus vocal et implémenter l'analyse par blocs pour les fichiers longs ;
 - exposer des erreurs d'import détaillées à l'interface ;
 - exécuter le corpus réel et la validation manuelle de lecture ;
 - compléter la validation interactive et le corpus avant de déclarer la phase 1 terminée.

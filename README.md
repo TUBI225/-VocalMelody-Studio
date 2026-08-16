@@ -4,7 +4,7 @@ Application Windows de génération de mélodies, d'accords et d'arrangements à
 
 ## État
 
-La phase 0 est terminée et la phase 1 Audio Frontend est en cours sur `phase1/audio-frontend` (Pull Request #2). L'application importe et analyse des WAV, rééchantillonne le flux mono à 16 kHz, produit des métadonnées JSON et contient un transport de lecture JUCE. Un décodeur MP3 `minimp3` épinglé est intégré et validé localement et en CI avec un vecteur Layer III réel ; un corpus musical/utilisateur reste à valider. Le M4A n'est pas implémenté. Le rééchantillonneur linéaire reste une baseline pour les diagnostics, pas encore un choix validé pour le pitch.
+La phase 0 est terminée, le socle Audio Frontend est fusionné dans `main` et la phase 2 Pitch Benchmark est en cours. L'application importe et analyse des WAV/MP3, rééchantillonne le flux mono à 16 kHz avec un sinc/Blackman polyphasé anti-repliement, produit des métadonnées JSON et contient un transport de lecture JUCE. Le filtre est validé localement sur sinusoïdes ciblées ; le corpus vocal et le benchmark pitch restent nécessaires. Le M4A n'est pas implémenté.
 
 ## Documentation permanente
 

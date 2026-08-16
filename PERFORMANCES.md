@@ -76,6 +76,17 @@ Ces résultats valident le comportement fonctionnel testé, pas la qualité spec
 - Le tableau de corrélation est limité à la fenêtre de 2048 échantillons, même si le sample rate fourni annonce un lag maximal supérieur.
 - Temps CPU et mémoire isolés de l'estimateur : NON MESURÉS ; le benchmark phase 2 reste requis.
 
+## Mesures T-102.2 - rééchantillonnage anti-repliement
+
+- Prototype sinc direct : rejeté, les fonctions trigonométriques par tap dépassaient 60 s sur les tests d'import longs.
+- Table polyphasée fixe 1024 phases : tests frontend/import/métadonnées Debug en 12,84 s.
+- Table polyphasée réduite par PGCD des sample rates : mêmes tests en 6,65 s en Debug.
+- Validation complète : CTest Debug 8/8 en 6,43 s ; Release 8/8 en 11,62 s dans l'environnement observé.
+- CI initiale de la PR #5, run `31952148170` : Windows Debug réussi en 3 min 59 s ; Windows Release réussi en 5 min 52 s, configuration, build et 8 tests inclus.
+- Réponse fréquentielle automatisée 48→16 kHz : RMS du sinus 1 kHz exigée entre 0,33 et 0,37 ; RMS du sinus 12 kHz exigée sous 0,01 et sous 5 % de la sortie linéaire.
+
+Ces durées couvrent des suites de tests et non le seul filtre. Le coût CPU/RAM isolé, les chirps et le corpus vocal restent NON MESURÉS.
+
 ## Mesures T-101.8
 
 - CTest Debug final après intégration MP3 : 6/6 tests réussis en 8,29 s.

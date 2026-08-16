@@ -2,11 +2,42 @@
 
 #include "TestContext.h"
 
+#include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <vector>
 
 namespace {
 using vocalmelody::testing::TestContext;
+
+[[nodiscard]] std::vector<float> makeSine(const int sampleRate, const double frequencyHz,
+                                          const double durationSeconds) {
+    const auto frameCount =
+        static_cast<std::size_t>(std::llround(static_cast<double>(sampleRate) * durationSeconds));
+    std::vector<float> samples(frameCount);
+    for (std::size_t index = 0; index < frameCount; ++index) {
+        const double phase = 2.0 * std::numbers::pi * frequencyHz * static_cast<double>(index) /
+                             static_cast<double>(sampleRate);
+        samples[index] = static_cast<float>(0.5 * std::sin(phase));
+    }
+    return samples;
+}
+
+[[nodiscard]] double rmsWithoutEdges(const std::vector<float>& samples) {
+    constexpr std::size_t kIgnoredEdgeFrames = 100;
+    if (samples.size() <= kIgnoredEdgeFrames * 2U) {
+        return 0.0;
+    }
+
+    double sumSquares = 0.0;
+    for (std::size_t index = kIgnoredEdgeFrames; index < samples.size() - kIgnoredEdgeFrames;
+         ++index) {
+        const double sample = static_cast<double>(samples[index]);
+        sumSquares += sample * sample;
+    }
+    const auto measuredFrames = samples.size() - kIgnoredEdgeFrames * 2U;
+    return std::sqrt(sumSquares / static_cast<double>(measuredFrames));
+}
 
 void testAnalyzeEmpty(TestContext& context) {
     using vocalmelody::frontend::analyzeSignal;
@@ -146,6 +177,56 @@ void testResampleLinear(TestContext& context) {
                    "an invalid target sample rate is rejected");
 }
 
+void testResampleWindowedSinc(TestContext& context) {
+    using vocalmelody::frontend::resampleWindowedSinc;
+
+    const std::vector<float> constant(100, 0.25F);
+    const auto upsampled = resampleWindowedSinc(constant, 8000, 16000);
+    context.expect(upsampled.has_value() && upsampled->size() == 200,
+                   "filtered upsampling preserves duration");
+    if (upsampled.has_value()) {
+        context.expect(
+            std::all_of(upsampled->begin(), upsampled->end(),
+                        [](const float sample) { return std::abs(sample - 0.25F) < 1.0e-5F; }),
+            "filtered upsampling preserves a constant signal");
+    }
+
+    const auto unchanged = resampleWindowedSinc(constant, 16000, 16000);
+    context.expect(unchanged.has_value() && *unchanged == constant,
+                   "filtered resampling preserves equal-rate input exactly");
+    context.expect(!resampleWindowedSinc({}, 48000, 16000).has_value(),
+                   "filtered resampling rejects empty input");
+}
+
+void testResampleWindowedSincFrequencyResponse(TestContext& context) {
+    using vocalmelody::frontend::resampleLinear;
+    using vocalmelody::frontend::resampleWindowedSinc;
+
+    constexpr int kSourceRate = 48000;
+    constexpr int kTargetRate = 16000;
+    const auto passband =
+        resampleWindowedSinc(makeSine(kSourceRate, 1000.0, 1.0), kSourceRate, kTargetRate);
+    context.expect(passband.has_value(), "a passband sine is filtered and resampled");
+    if (passband.has_value()) {
+        const double passbandRms = rmsWithoutEdges(*passband);
+        context.expect(passbandRms > 0.33 && passbandRms < 0.37,
+                       "1 kHz remains within the expected passband amplitude");
+    }
+
+    const auto stopbandInput = makeSine(kSourceRate, 12000.0, 1.0);
+    const auto filtered = resampleWindowedSinc(stopbandInput, kSourceRate, kTargetRate);
+    const auto linear = resampleLinear(stopbandInput, kSourceRate, kTargetRate);
+    context.expect(filtered.has_value() && linear.has_value(),
+                   "a stopband sine can be compared between resamplers");
+    if (filtered.has_value() && linear.has_value()) {
+        const double filteredRms = rmsWithoutEdges(*filtered);
+        const double linearRms = rmsWithoutEdges(*linear);
+        context.expect(filteredRms < 0.01, "12 kHz is attenuated before downsampling to 16 kHz");
+        context.expect(filteredRms < linearRms * 0.05,
+                       "filtered resampling suppresses aliasing versus linear interpolation");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -158,5 +239,7 @@ int main() {
     testEstimateNoiseFloor(context);
     testDownmix(context);
     testResampleLinear(context);
+    testResampleWindowedSinc(context);
+    testResampleWindowedSincFrequencyResponse(context);
     return context.result();
 }

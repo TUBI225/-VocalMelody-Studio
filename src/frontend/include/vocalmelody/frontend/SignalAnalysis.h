@@ -30,4 +30,8 @@ estimateNoiseFloor(const std::span<const float> monoFrames) noexcept;
 [[nodiscard]] std::optional<std::vector<float>>
 resampleLinear(const std::span<const float> input, int sourceSampleRate, int targetSampleRate);
 
+[[nodiscard]] std::optional<std::vector<float>>
+resampleWindowedSinc(const std::span<const float> input, int sourceSampleRate,
+                     int targetSampleRate);
+
 } // namespace vocalmelody::frontend

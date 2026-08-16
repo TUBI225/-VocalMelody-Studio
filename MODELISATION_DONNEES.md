@@ -1721,7 +1721,7 @@ La présente section actualise la section 98 :
 Limites de modèle encore ouvertes :
 
 - `monoAnalysisPath` reste vide car aucun artefact mono persistant n'est encore produit ;
-- `analysisSampleRate` vaut désormais 16 000 Hz ; `analysisVersion` passe à 2 pour distinguer les résultats rééchantillonnés des métadonnées antérieures ;
+- `analysisSampleRate` vaut 16 000 Hz ; `analysisVersion=2` identifie l'ancienne interpolation linéaire et `analysisVersion=3` le sinc/Blackman polyphasé anti-repliement ;
 - `warnings` n'est pas encore alimenté ;
 - `AudioFormat::M4a` exprime un format visé, pas une preuve que le codec est disponible sous Windows ;
 - le schéma JSON n'a pas encore de numéro de version racine ni de migration ; il ne doit donc pas être considéré comme format projet stable.

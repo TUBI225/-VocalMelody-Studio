@@ -124,7 +124,8 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
         const auto numFrames = decodedData->numFrames;
 
         const auto sourceStats = frontend::analyzeSignal(mono, sampleRate);
-        const auto analysisFrames = frontend::resampleLinear(mono, sampleRate, kAnalysisSampleRate);
+        const auto analysisFrames =
+            frontend::resampleWindowedSinc(mono, sampleRate, kAnalysisSampleRate);
         if (!sourceStats.has_value() || !analysisFrames.has_value()) {
             return std::nullopt;
         }
@@ -171,8 +172,8 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
         }
 
         const auto analysis = common::AudioAnalysisResult::create(
-            source->id(), 2, *durationSeconds, kAnalysisSampleRate, {}, *clippingScore, *noiseScore,
-            *voicePresenceScore, silenceSegments, *qualityScore, {});
+            source->id(), kAnalysisVersion, *durationSeconds, kAnalysisSampleRate, {},
+            *clippingScore, *noiseScore, *voicePresenceScore, silenceSegments, *qualityScore, {});
         if (!analysis.has_value()) {
             return std::nullopt;
         }

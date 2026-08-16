@@ -1590,7 +1590,7 @@ fichier audio
 → SHA-256 avant décodage
 → décodage JUCE en mémoire
 → moyenne de tous les canaux vers mono
-→ rééchantillonnage linéaire borné à 16 kHz
+→ rééchantillonnage sinc/Blackman polyphasé borné à 16 kHz
 → diagnostics
 → SHA-256 après décodage
 → `AudioSource` + `AudioAnalysisResult`
@@ -1609,7 +1609,7 @@ Garde-fous actuels :
 Limites non masquées :
 
 - l'import et l'analyse s'exécutent encore sur le thread d'interface et chargent le signal en mémoire ;
-- le rééchantillonnage linéaire à 16 kHz est une baseline déterministe sans filtre anti-repliement ; il convient aux diagnostics initiaux mais ne constitue pas encore le rééchantillonneur validé pour le pitch ;
+- le rééchantillonnage à 16 kHz utilise désormais un sinc fenêtré Blackman de 33 taps, avec phases dérivées du PGCD des sample rates et marge de coupure de 90 % en downsampling ; les sinusoïdes automatisées réduisent R-012, mais le corpus vocal et les mesures isolées restent nécessaires ;
 - WAV est couvert par tests synthétiques, MP3 n'est pas couvert par un corpus réel et M4A n'est pas garanti par les formats JUCE enregistrés sous Windows ;
 - la lecture n'a pas encore été validée manuellement sur un périphérique réel ;
 - l'API d'import retourne encore `std::nullopt` sans code d'erreur détaillé.
