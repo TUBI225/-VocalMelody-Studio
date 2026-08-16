@@ -1067,3 +1067,12 @@ Réduire R-012 avant le benchmark pitch sans introduire JUCE dans `src/frontend`
 ## État
 
 R-012 est RÉDUIT mais reste OUVERT. La preuve actuelle porte sur des sinusoïdes ciblées ; elle ne démontre pas encore la précision pitch sur chirps, vibrato, glissando ou voix réelle.
+
+## Fusion de T-102.2
+
+- Pull Request #5 passée de brouillon à prête pour révision puis fusionnée le 2026-08-16 avec historique préservé.
+- Merge commit : `70b801f` (`Merge pull request #5 from TUBI225/phase2/antialias-resampler`).
+- CI finale de la tête documentaire `ef91831` : run `31952485810`, Windows Debug et Release RÉUSSIS, formatage, configuration, build et 8 tests inclus.
+- Branche `phase2/antialias-resampler` supprimée localement et sur l'origine ; `main` local synchronisé avec `origin/main`.
+
+T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.
