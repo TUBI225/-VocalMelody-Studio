@@ -19,6 +19,7 @@ class AudioFileImporter final {
     static constexpr std::int64_t kMaxFileSizeBytes = 1024LL * 1024LL * 1024LL;
     static constexpr std::int64_t kMaxDecodedFrames = 30'000'000LL;
     static constexpr int kAnalysisSampleRate = 16'000;
+    static constexpr int kAnalysisVersion = 3;
 
     AudioFileImporter();
 

@@ -61,8 +61,8 @@ void testSaveMetadata(TestContext& context) {
                               std::istreambuf_iterator<char>());
     context.expect(content.find("\"originalFormat\":\"wav\"") != std::string::npos,
                    "saved metadata contains the format");
-    context.expect(content.find("\"analysisVersion\":2") != std::string::npos,
-                   "saved metadata contains the resampled analysis version");
+    context.expect(content.find("\"analysisVersion\":3") != std::string::npos,
+                   "saved metadata contains the filtered resampling analysis version");
 }
 
 void testSourceFileUnchanged(TestContext& context) {

@@ -1032,3 +1032,37 @@ La correction est validée localement et en CI. Les limites fonctionnelles du be
 - Branche `fix/pitch-autocorrelation-bounds` supprimée localement et sur l'origine ; `main` local synchronisé avec `origin/main`.
 
 T-102.1 est fusionnée et close. T-102 reste EN COURS pour le corpus vocal, les estimateurs cibles, les mesures et la sélection FAST/BALANCED/HIGH QUALITY.
+
+# 2026-08-16 - T-102.2 - Rééchantillonnage anti-repliement 16 kHz
+
+## Objectif
+
+Réduire R-012 avant le benchmark pitch sans introduire JUCE dans `src/frontend`, tout en conservant une preuve comparative contre l'interpolation linéaire.
+
+## Implémentation
+
+- Ajout de `resampleWindowedSinc`, sinc fenêtré Blackman de rayon 16 (33 taps).
+- Downsampling avec marge de coupure à 90 % pour créer une bande de transition avant la nouvelle fréquence de Nyquist.
+- Table polyphasée pré-calculée ; nombre de phases dérivé du PGCD source/cible et plafonné à 1024.
+- Taille de sortie toujours plafonnée à 100 millions de trames ; normalisation des poids aux frontières.
+- `AudioFileImporter` utilise exclusivement le chemin filtré ; `resampleLinear` reste une référence de comparaison dans les tests.
+- `analysisVersion` passe de 2 à 3 et le test JSON est mis à jour.
+
+## Preuves fonctionnelles
+
+- Upsampling d'un signal constant : durée et amplitude conservées.
+- Sample rates identiques : copie exacte.
+- Downsampling 48→16 kHz : sinus 1 kHz conservé dans une plage RMS 0,33-0,37.
+- Même conversion : sinus 12 kHz atténué sous 0,01 RMS et sous 5 % du niveau produit par l'interpolation linéaire.
+
+## Performance et validation locale
+
+- Prototype trigonométrique direct rejeté après dépassement de 60 s sur les tests longs.
+- Optimisation finale par table polyphasée/PGCD : suite ciblée en 6,65 s Debug.
+- CTest complet Debug : 8/8 en 6,43 s.
+- CTest complet Release : 8/8 en 11,62 s.
+- CI et corpus vocal : à exécuter.
+
+## État
+
+R-012 est RÉDUIT mais reste OUVERT. La preuve actuelle porte sur des sinusoïdes ciblées ; elle ne démontre pas encore la précision pitch sur chirps, vibrato, glissando ou voix réelle.

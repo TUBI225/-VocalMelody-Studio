@@ -33,6 +33,8 @@ void testImportMonoWav(TestContext& context) {
                    "a one second duration is detected");
     context.expect(result->analysis.analysisSampleRate() == AudioFileImporter::kAnalysisSampleRate,
                    "analysis is resampled to the canonical sample rate");
+    context.expect(result->analysis.analysisVersion() == AudioFileImporter::kAnalysisVersion,
+                   "analysis metadata identifies the filtered resampler version");
     context.expect(result->analysis.clippingScore().value() < 1e-6, "a 0.25 signal is not clipped");
     context.expect(std::abs(result->analysis.voicePresenceScore().value() - 1.0) < 1e-6,
                    "a constant signal is fully voiced");

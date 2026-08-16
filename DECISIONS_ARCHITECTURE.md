@@ -87,10 +87,10 @@ Les décisions sont conservées dans l'ordre chronologique. Une décision rempla
 ## ADR-007 - Sample rate canonique d'analyse à 16 kHz
 
 - Date : 2026-08-14
-- Statut : ACCEPTÉE COMME BASELINE, À RÉÉVALUER AVANT LA PHASE PITCH
+- Statut : ACCEPTÉE AVEC FILTRAGE ANTI-REPLIEMENT, À BENCHMARKER SUR CORPUS VOCAL
 - Problème : les diagnostics doivent recevoir une fréquence d'échantillonnage stable malgré des sources WAV différentes.
-- Choix provisoire : downmix de tous les canaux puis interpolation linéaire bornée vers 16 kHz ; le clipping reste mesuré sur les trames source pour ne pas masquer les pics.
-- Justification : implémentation pure, déterministe, testable sans JUCE et suffisante pour stabiliser les diagnostics de phase 1.
-- Limites : absence de filtre anti-repliement lors du sous-échantillonnage ; qualité non démontrée pour l'estimation de pitch.
-- Conséquences : `analysisSampleRate=16000` et `analysisVersion=2` ; toute métadonnée version 1 reste distinguable.
-- Condition de révision : benchmark avant phase 2 contre un rééchantillonneur à filtrage polyphasé/sinc ou une solution JUCE validée.
+- Choix retenu pour le socle : downmix de tous les canaux puis sinc fenêtré Blackman polyphasé vers 16 kHz, rayon 16 (33 taps), marge de coupure 90 % lors du sous-échantillonnage et phases pré-calculées à partir du PGCD des sample rates, plafonnées à 1024. Le clipping reste mesuré sur les trames source.
+- Justification : implémentation pure, déterministe et indépendante de JUCE ; un test 48→16 kHz conserve un sinus de 1 kHz dans sa plage RMS attendue et atténue un sinus de 12 kHz sous 0,01 RMS, contrairement à l'interpolation linéaire.
+- Limites : preuve spectrale ciblée seulement ; chirps, voix, vibrato, glissando, coût CPU/RAM isolé et comparaison avec une bibliothèque de référence restent à mesurer.
+- Conséquences : `analysisSampleRate=16000` et `analysisVersion=3` ; les métadonnées produites par l'interpolation linéaire version 2 restent distinguables. `resampleLinear` est conservé uniquement comme référence comparative de test.
+- Condition de révision : benchmark vocal ou mesures de performance montrant qu'un filtre différent offre un meilleur compromis précision/CPU/RAM.
