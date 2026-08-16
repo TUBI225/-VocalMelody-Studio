@@ -1061,7 +1061,8 @@ Réduire R-012 avant le benchmark pitch sans introduire JUCE dans `src/frontend`
 - Optimisation finale par table polyphasée/PGCD : suite ciblée en 6,65 s Debug.
 - CTest complet Debug : 8/8 en 6,43 s.
 - CTest complet Release : 8/8 en 11,62 s.
-- CI et corpus vocal : à exécuter.
+- CI initiale de la PR #5 : run `31952148170` RÉUSSI ; Windows Debug en 3 min 59 s et Windows Release en 5 min 52 s, formatage, configuration, build et 8 tests inclus.
+- Corpus vocal : à exécuter.
 
 ## État
 

@@ -8,13 +8,13 @@
 - Plateforme cible : Windows x64
 - Branche Git : `phase2/antialias-resampler`, créée depuis `main` propre (Pull Requests #1 à #4 fusionnées)
 - Dernier commit poussé sur `main` : `d5a9a58` - docs(pitch): trace la fusion de la Pull Request 4
-- Dernière mise à jour : 2026-08-16 (T-102.2 anti-repliement validée localement, CI à exécuter)
+- Dernière mise à jour : 2026-08-16 (T-102.2 anti-repliement validée localement et par la CI de la PR #5)
 
 ## État général
 
 La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV/MP3 réel, analyse mono, diagnostics, métadonnées JSON, resampling 16 kHz, transport de lecture et décodage MP3 sont implémentés et **fusionnés dans `main` (PR #2, merge commit `8d0b715`)**. L'import est borné (1 Gio sur disque, 30 millions de trames décodées), vérifie le succès du décodage, calcule un SHA-256 avant/après et rejette toute modification concurrente. La suite de tests passe 6/6 en Debug et Release, le contrôle de formatage 28/28 et la CI Windows du dernier commit (run #15) est verte. Restent : validation manuelle de la lecture, corpus musical réel et M4A.
 
-Le **socle de la phase 2 (Pitch Benchmark)** est implémenté, validé et **fusionné dans `main` (PR #3, merge commit `466f4cb`)** : structures `PitchFrame` / `PitchCandidate` / `PitchDistributionFrame` et types forts `MidiPitch` / `Cents` dans `src/common`, interface `IPitchEstimator` et baseline `AutocorrelationPitchEstimator` dans le nouveau module `src/pitch` (sans JUCE). La correction T-102.1 est fusionnée par la PR #4 (`41463c9`). T-102.2 remplace localement le chemin d'analyse linéaire par un sinc/Blackman polyphasé et passe `analysisVersion` à 3 ; Debug/Release 8/8 et formatage 35/35 sont verts, CI à exécuter. Le benchmark proprement dit reste à réaliser.
+Le **socle de la phase 2 (Pitch Benchmark)** est implémenté, validé et **fusionné dans `main` (PR #3, merge commit `466f4cb`)** : structures `PitchFrame` / `PitchCandidate` / `PitchDistributionFrame` et types forts `MidiPitch` / `Cents` dans `src/common`, interface `IPitchEstimator` et baseline `AutocorrelationPitchEstimator` dans le nouveau module `src/pitch` (sans JUCE). La correction T-102.1 est fusionnée par la PR #4 (`41463c9`). T-102.2 remplace dans la PR #5 le chemin d'analyse linéaire par un sinc/Blackman polyphasé et passe `analysisVersion` à 3 ; Debug/Release 8/8, formatage 35/35 et CI initiale sont verts. Le benchmark proprement dit reste à réaliser.
 
 ## Tâches par statut
 
