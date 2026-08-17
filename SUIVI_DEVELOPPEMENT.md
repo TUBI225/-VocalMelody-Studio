@@ -1128,4 +1128,27 @@ Sondes dédiées (sinus amplitude 0.5, 1 s, sortie 16 kHz) :
 
 Les constats confirmés de l'audit (C-01, C-02) et les constats mesurés (C-05 corrigé, C-06 documenté) sont donc intégrés à `main`. Prochaine étape prévue : diagnostics d'échec d'import détaillés (`ImportError`/`std::expected`), PR distincte.
 
+# 2026-08-17 - Diagnostics d'échec d'import (PR #8, constat C-04)
+
+## Objectif
+
+Remonter la raison précise d'un échec d'import au lieu d'un `std::optional` muet (constat C-04 de l'audit : « Import impossible. » sans détail).
+
+## Implémentation
+
+- `enum class ImportError` (FileNotFound, EmptyFile, FileTooLarge, UnsupportedFormat, DecodeFailed, FileModifiedDuringImport, AnalysisFailed, InvalidMetadata, OutOfMemory) et `importErrorToString` dans `AudioFileImporter.h/.cpp`.
+- `AudioImportOutcome` : résultat structuré (`success`/`failure`, `has_value`/`value`/`operator->`/`error`), l'import retourne désormais cet objet.
+- Rejet `UnsupportedFormat` **avant décodage** pour les extensions inconnues et M4A (plus de décodage intégral gaspillé puis rejeté).
+- UI (`MainComponent`) : « Import impossible : <raison> » affichée.
+- Tests : chaque cas d'échec vérifie maintenant l'erreur précise (FileNotFound, UnsupportedFormat, DecodeFailed, EmptyFile).
+
+## Découverte
+
+Les diagnostics ont exposé un bug latent de test : le fichier `.bin` était écrit sans `file.close()`, donc réellement vide (0 octet) au moment de l'import (erreur `EmptyFile`). `file.close()` ajouté ; l'erreur attendue devient `UnsupportedFormat`.
+
+## Validation locale
+
+- CTest Debug 8/8 ; Release 8/8 ; clang-format 35/35 ; CI à exécuter après publication de la branche.
+- Constat C-04 : RÉSOLU.
+
 T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.

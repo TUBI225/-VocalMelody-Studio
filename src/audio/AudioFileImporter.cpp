@@ -92,19 +92,76 @@ std::string AudioFileImporter::computeFileHash(const std::string& path) {
     return juce::SHA256(file).toHexString().toStdString();
 }
 
-std::optional<AudioImportResult> AudioFileImporter::import(const std::string& path) const noexcept {
+std::string_view importErrorToString(const ImportError error) noexcept {
+    switch (error) {
+    case ImportError::FileNotFound:
+        return "Fichier introuvable";
+    case ImportError::EmptyFile:
+        return "Fichier vide";
+    case ImportError::FileTooLarge:
+        return "Fichier trop volumineux (1 Gio max)";
+    case ImportError::UnsupportedFormat:
+        return "Format non pris en charge";
+    case ImportError::DecodeFailed:
+        return "Décodage impossible ou fichier corrompu";
+    case ImportError::FileModifiedDuringImport:
+        return "Fichier modifié pendant l'import";
+    case ImportError::AnalysisFailed:
+        return "Analyse impossible";
+    case ImportError::InvalidMetadata:
+        return "Métadonnées invalides";
+    case ImportError::OutOfMemory:
+        return "Mémoire insuffisante";
+    }
+    return "Erreur inconnue";
+}
+
+AudioImportOutcome AudioImportOutcome::success(AudioImportResult result) noexcept {
+    AudioImportOutcome outcome;
+    outcome.result_ = std::move(result);
+    return outcome;
+}
+
+AudioImportOutcome AudioImportOutcome::failure(const ImportError error) noexcept {
+    AudioImportOutcome outcome;
+    outcome.error_ = error;
+    return outcome;
+}
+
+bool AudioImportOutcome::has_value() const noexcept { return result_.has_value(); }
+
+AudioImportOutcome::operator bool() const noexcept { return result_.has_value(); }
+
+const AudioImportResult& AudioImportOutcome::value() const { return *result_; }
+
+const AudioImportResult* AudioImportOutcome::operator->() const { return &*result_; }
+
+ImportError AudioImportOutcome::error() const noexcept { return error_; }
+
+AudioImportOutcome AudioFileImporter::import(const std::string& path) const noexcept {
     try {
         const juce::File file(path);
-        if (!file.existsAsFile() || file.getSize() <= 0 || file.getSize() > kMaxFileSizeBytes) {
-            return std::nullopt;
+        if (!file.existsAsFile()) {
+            return AudioImportOutcome::failure(ImportError::FileNotFound);
+        }
+        if (file.getSize() <= 0) {
+            return AudioImportOutcome::failure(ImportError::EmptyFile);
+        }
+        if (file.getSize() > kMaxFileSizeBytes) {
+            return AudioImportOutcome::failure(ImportError::FileTooLarge);
         }
         const std::string fileHashBeforeDecode = computeFileHash(path);
         if (fileHashBeforeDecode.empty()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::FileNotFound);
         }
 
         const common::AudioFormat format =
             common::audioFormatFromExtension(file.getFileExtension().toStdString());
+        // Rejet avant décodage : un format inconnu (ou M4A, non implémenté) ne
+        // doit pas être décodé intégralement puis jeté.
+        if (format == common::AudioFormat::Unknown || format == common::AudioFormat::M4a) {
+            return AudioImportOutcome::failure(ImportError::UnsupportedFormat);
+        }
 
         std::optional<RawDecodedData> decodedData;
         if (format == common::AudioFormat::Mp3) {
@@ -116,7 +173,7 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
             decodedData = decodeWithJuce(file);
         }
         if (!decodedData.has_value()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::DecodeFailed);
         }
 
         const auto& mono = decodedData->mono;
@@ -129,12 +186,12 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
         const auto analysisFrames =
             frontend::resampleWindowedSinc(mono, sampleRate, kAnalysisSampleRate);
         if (!sourceStats.has_value() || !analysisFrames.has_value()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::AnalysisFailed);
         }
 
         const auto analysisStats = frontend::analyzeSignal(*analysisFrames, kAnalysisSampleRate);
         if (!analysisStats.has_value()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::AnalysisFailed);
         }
 
         const auto silenceSegments =
@@ -144,7 +201,7 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
         const auto durationSeconds = common::Seconds::fromValue(static_cast<double>(numFrames) /
                                                                 static_cast<double>(sampleRate));
         if (!durationSeconds.has_value()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::AnalysisFailed);
         }
 
         const auto clippingScore = common::Score01::fromValue(sourceStats->clippingScore);
@@ -157,12 +214,12 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
 
         if (!clippingScore.has_value() || !noiseScore.has_value() ||
             !voicePresenceScore.has_value() || !qualityScore.has_value()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::AnalysisFailed);
         }
 
         const std::string fileHashAfterDecode = computeFileHash(path);
         if (fileHashAfterDecode != fileHashBeforeDecode) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::FileModifiedDuringImport);
         }
 
         const auto source = common::AudioSource::create(
@@ -170,19 +227,19 @@ std::optional<AudioImportResult> AudioFileImporter::import(const std::string& pa
             juce::Time::getCurrentTime().toISO8601(true).toStdString(), format, sampleRate,
             numChannels, bitDepth, *durationSeconds, fileHashBeforeDecode);
         if (!source.has_value()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::InvalidMetadata);
         }
 
         const auto analysis = common::AudioAnalysisResult::create(
             source->id(), kAnalysisVersion, *durationSeconds, kAnalysisSampleRate, {},
             *clippingScore, *noiseScore, *voicePresenceScore, silenceSegments, *qualityScore, {});
         if (!analysis.has_value()) {
-            return std::nullopt;
+            return AudioImportOutcome::failure(ImportError::InvalidMetadata);
         }
 
-        return AudioImportResult{*source, *analysis};
+        return AudioImportOutcome::success(AudioImportResult{*source, *analysis});
     } catch (...) {
-        return std::nullopt;
+        return AudioImportOutcome::failure(ImportError::OutOfMemory);
     }
 }
 
