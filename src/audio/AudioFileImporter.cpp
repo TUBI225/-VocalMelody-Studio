@@ -48,8 +48,10 @@ struct RawDecodedData final {
     const auto frameCount = reader->lengthInSamples;
     const double sourceSampleRate = reader->sampleRate;
     if (reader->numChannels == 0 ||
-        reader->numChannels > static_cast<unsigned int>(std::numeric_limits<int>::max()) ||
+        reader->numChannels > static_cast<unsigned int>(AudioFileImporter::kMaxChannelCount) ||
         frameCount <= 0 || frameCount > AudioFileImporter::kMaxDecodedFrames ||
+        static_cast<std::int64_t>(reader->numChannels) * static_cast<std::int64_t>(frameCount) >
+            AudioFileImporter::kMaxDecodedSamples ||
         !std::isfinite(sourceSampleRate) || sourceSampleRate <= 0.0 ||
         sourceSampleRate > static_cast<double>(std::numeric_limits<int>::max())) {
         return std::nullopt;

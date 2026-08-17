@@ -13,7 +13,7 @@
 #endif
 
 #include <algorithm>
-#include <fstream>
+#include <filesystem>
 
 namespace vocalmelody::audio {
 namespace {
@@ -106,20 +106,29 @@ std::optional<DecodedAudioData> Mp3Decoder::decodeFile(const std::string& filePa
     }
 
     try {
-        std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-        if (!file.is_open()) {
+        // Le chemin est fourni en UTF-8 (juce::File) ; sur Windows, les API de
+        // fichiers étroites (fopen/CreateFileA) rejettent les chemins non-ASCII.
+        // std::filesystem::path construit depuis un std::u8string convertit en
+        // UTF-16 natif et permet d'ouvrir les chemins accentués.
+        const auto utf8Path =
+            std::filesystem::path(std::u8string(filePath.begin(), filePath.end()));
+
+        std::error_code error;
+        const auto fileSize = std::filesystem::file_size(utf8Path, error);
+        if (error || fileSize <= 0 || static_cast<std::size_t>(fileSize) > kMaxMp3SizeBytes) {
             return std::nullopt;
         }
-        const auto fileSize = file.tellg();
-        if (fileSize <= 0 || static_cast<std::size_t>(fileSize) > kMaxMp3SizeBytes) {
-            return std::nullopt;
-        }
-        file.close();
 
         mp3dec_ex_t dec;
+#ifdef _WIN32
+        if (mp3dec_ex_open_w(&dec, utf8Path.wstring().c_str(), MP3D_SEEK_TO_SAMPLE) != 0) {
+            return std::nullopt;
+        }
+#else
         if (mp3dec_ex_open(&dec, filePath.c_str(), MP3D_SEEK_TO_SAMPLE) != 0) {
             return std::nullopt;
         }
+#endif
 
         return processDecoder(dec);
     } catch (...) {

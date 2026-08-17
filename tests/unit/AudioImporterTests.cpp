@@ -185,6 +185,32 @@ void testImportMissingFile(TestContext& context) {
                    "a missing file is rejected");
 }
 
+void testImportForgedHeaders(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+
+    // En-tête déclarant plus de canaux que le plafond (65 > 64) : rejeté avant
+    // toute allocation.
+    const std::string manyChannels = vocalmelody::testing::tempFilePath("vms_test_forged_65ch.wav");
+    vocalmelody::testing::writeForgedWavHeader(manyChannels, 65, 1);
+    context.expect(!AudioFileImporter{}.import(manyChannels).has_value(),
+                   "a wav declaring 65 channels is rejected before allocation");
+
+    // Borne maximale du champ canaux (65 535) : rejeté sans allocation massive.
+    const std::string maxChannels =
+        vocalmelody::testing::tempFilePath("vms_test_forged_65535ch.wav");
+    vocalmelody::testing::writeForgedWavHeader(maxChannels, 65535, 1);
+    context.expect(!AudioFileImporter{}.import(maxChannels).has_value(),
+                   "a wav declaring 65535 channels is rejected before allocation");
+
+    // 64 canaux x 2 M trames déclarées : le produit (128 M) dépasse le plafond
+    // total d'échantillons décodés (100 M).
+    const std::string manySamples =
+        vocalmelody::testing::tempFilePath("vms_test_forged_total_samples.wav");
+    vocalmelody::testing::writeForgedWavHeader(manySamples, 64, 2'000'000);
+    context.expect(!AudioFileImporter{}.import(manySamples).has_value(),
+                   "a wav exceeding the total decoded sample cap is rejected");
+}
+
 } // namespace
 
 int main() {
@@ -199,5 +225,6 @@ int main() {
     testImportMp3WithWrongExtension(context);
     testImportInvalidFile(context);
     testImportMissingFile(context);
+    testImportForgedHeaders(context);
     return context.result();
 }
