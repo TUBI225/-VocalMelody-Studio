@@ -13,10 +13,15 @@ constexpr float kSilenceAmplitude = 0.001F;
 constexpr float kClippingAmplitude = 0.99F;
 constexpr std::size_t kMinSilenceRun = 2;
 constexpr std::size_t kMaxResampledFrames = 100'000'000;
-constexpr int kSincRadius = 16;
+constexpr int kSincRadius = 32;
 constexpr std::size_t kSincTapCount = static_cast<std::size_t>(kSincRadius * 2 + 1);
 constexpr std::size_t kMaxSincPhaseCount = 1024;
-constexpr double kDownsampleCutoffMargin = 0.90;
+// Marge de coupure réduite (0.78 au lieu de 0.90) et rayon porté à 32 : la
+// largeur de transition d'un sinc fenêtré (33 taps) dépassait la marge pour
+// les grands ratios de downsample (ex. 96 kHz -> 16 kHz : fuite -10 dB à
+// 8.5 kHz, mesurée le 2026-08-16). Le noyau 67 taps resserre la transition
+// et la marge 0.78 place la coupure plus bas que la nouvelle Nyquist.
+constexpr double kDownsampleCutoffMargin = 0.78;
 constexpr double kPi = 3.14159265358979323846;
 
 [[nodiscard]] float square(const float value) noexcept { return value * value; }

@@ -1075,4 +1075,45 @@ R-012 est RÉDUIT mais reste OUVERT. La preuve actuelle porte sur des sinusoïde
 - CI finale de la tête documentaire `ef91831` : run `31952485810`, Windows Debug et Release RÉUSSIS, formatage, configuration, build et 8 tests inclus.
 - Branche `phase2/antialias-resampler` supprimée localement et sur l'origine ; `main` local synchronisé avec `origin/main`.
 
+# 2026-08-16 - Audit : corrections de robustesse (PR #6) et anti-repliement renforcé (T-102.3)
+
+## Contexte
+
+L'audit du 2026-08-16 (`AUDIT_2026-08-16.md`, non exhaustif) a identifié deux constats de robustesse confirmés (plafonds de décodage, chemins Unicode) et deux bornes théoriques (aliasing, MP3 CBR tronqué) à mesurer avant toute modification.
+
+## Corrections PR #6 (branche `fix/import-hardening-channels-unicode`)
+
+- Plafond de canaux (≤ 64) et plafond total d'échantillons décodés (100 M) vérifiés avant toute allocation dans `decodeWithJuce` (`AudioFileImporter.h/.cpp`) : un en-tête WAV forgé ne peut plus déclencher d'allocation massive.
+- Chemins Unicode Windows : `mp3dec_ex_open_w` pour le décodage MP3 et `std::filesystem::path` pour la sauvegarde des métadonnées.
+- Tests : en-têtes WAV forgés (65 / 65 535 canaux, plafond total), chemins accentués MP3 et métadonnées. Preuve rouge/vert : les tests échouent sans les correctifs (vérifié par stash + rebuild). CTest Debug 8/8, Release 8/8, clang-format 35/35.
+
+## Mesure de l'aliasing (T-102.3, avant modification)
+
+Sondes dédiées (sinus amplitude 0.5, 1 s, sortie 16 kHz) :
+
+- 44,1/48 -> 16 kHz : contenu 8,5-10 kHz replié dans 6-7,5 kHz à -15/-35 dB ;
+- 96 -> 16 kHz : fuite -9,8 dB à 8,5 kHz (le noyau 33 taps ne suffit pas pour les grands ratios de downsample).
+- La suite existante (1 kHz / 12 kHz) ne couvrait pas cette bande critique.
+
+## Mesure du MP3 CBR tronqué (C-06)
+
+- Un vecteur CBR coupé en fin de fichier (jusqu'à -512 octets) se décode sans erreur, la fin tronquée étant ignorée (`last_error == 0`) : comportement confirmé et documenté comme invariant (`Mp3Decoder.h`), test de figeage ajouté. Aucune détection fiable n'est disponible au niveau du décodeur.
+
+## Correction T-102.3 (branche `phase2/resampler-anti-aliasing`)
+
+- `kSincRadius` 16 -> 32 (noyau 67 taps) et `kDownsampleCutoffMargin` 0.90 -> 0.78 dans `SignalAnalysis.cpp` ; `analysisVersion` 3 -> 4.
+- Résultats mesurés : 8,5 kHz atténué à -80 dB (44,1/48 kHz) et -26 dB (96 kHz) ; coupure -6 dB déplacée de ~7,3 à ~6,3 kHz (limite documentée dans `PERFORMANCES.md`).
+- Tests permanents ajoutés : bande critique 8,5/9,5 kHz en 48 -> 16 kHz, 8,5 kHz en 96 -> 16 kHz, MP3 CBR tronqué.
+
+## Validation locale
+
+- CTest Debug : 8/8 (6,84 s) ; Release : 8/8 ; clang-format 35/35.
+- Impact temps import : négligeable sur le corpus actuel (3,86 s vs 3,89 s avant).
+
+## État
+
+- R-012 : RÉDUIT - la bande critique est désormais mesurée et couverte par des tests permanents ; chirps et corpus vocal restent à exécuter.
+- C-06 (MP3 CBR tronqué) : mesuré et documenté comme invariant assumé.
+- CI : à exécuter sur les PR #6 et T-102.3 après publication des branches.
+
 T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.
