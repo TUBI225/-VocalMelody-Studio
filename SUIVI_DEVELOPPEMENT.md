@@ -1116,4 +1116,16 @@ Sondes dédiées (sinus amplitude 0.5, 1 s, sortie 16 kHz) :
 - C-06 (MP3 CBR tronqué) : mesuré et documenté comme invariant assumé.
 - CI : à exécuter sur les PR #6 et T-102.3 après publication des branches.
 
+## Fusion des Pull Requests #6 et #7 (2026-08-17)
+
+- Pull Request #6 (plafonds de décodage + chemins Unicode) passée de brouillon à prête pour révision puis fusionnée le 2026-08-17 avec historique préservé.
+- CI de la PR #6 : run `31985000402`, Windows Debug (3 min 50 s) et Release (6 min 2 s) RÉUSSIS, formatage, configuration, build et 8 tests inclus.
+- Merge commit : `06b653e` (`Merge pull request #6 from TUBI225/fix/import-hardening-channels-unicode`).
+- Pull Request #7 (anti-repliement renforcé, T-102.3) passée de brouillon à prête pour révision puis fusionnée le 2026-08-17 avec historique préservé ; conflit de fusion (tests MP3) résolu en conservant les deux nouveaux tests.
+- CI de la PR #7 : run `31986202968`, Windows Debug (3 min 56 s) et Release (6 min 23 s) RÉUSSIS.
+- Merge commit : `df6eefa` (`Merge pull request #7 from TUBI225/phase2/resampler-anti-aliasing`).
+- Branches `fix/import-hardening-channels-unicode` et `phase2/resampler-anti-aliasing` conservées localement et sur l'origine ; `main` local synchronisé.
+
+Les constats confirmés de l'audit (C-01, C-02) et les constats mesurés (C-05 corrigé, C-06 documenté) sont donc intégrés à `main`. Prochaine étape prévue : diagnostics d'échec d'import détaillés (`ImportError`/`std::expected`), PR distincte.
+
 T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.
