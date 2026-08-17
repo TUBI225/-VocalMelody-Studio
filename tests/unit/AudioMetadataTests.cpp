@@ -4,6 +4,7 @@
 #include "TestContext.h"
 #include "WavTestHelpers.h"
 
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -80,6 +81,44 @@ void testSourceFileUnchanged(TestContext& context) {
     context.expect(!before.empty() && before == after, "the original audio file is never modified");
 }
 
+void testSaveMetadataAccentedPath(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+    using vocalmelody::audio::saveAudioMetadata;
+
+    const std::string wavPath = vocalmelody::testing::unicodeTempFilePath("vms_meta_accent.wav");
+    const std::vector<std::vector<float>> samples(1, std::vector<float>(22050, 0.1F));
+    vocalmelody::testing::writePcm16Wav(wavPath, 22050, 1, samples);
+
+    const auto result = AudioFileImporter{}.import(wavPath);
+    context.expect(result.has_value(), "a wav on a non-ASCII path imports successfully");
+    if (!result.has_value()) {
+        return;
+    }
+
+    const std::string metadataPath =
+        vocalmelody::testing::unicodeTempFilePath("vms_meta_accent.json");
+
+    // Retire un éventuel résidu d'une exécution précédente : le fichier doit
+    // être créé par la sauvegarde, pas retrouvé par hasard.
+    const auto savedPath =
+        std::filesystem::path(std::u8string(metadataPath.begin(), metadataPath.end()));
+    std::error_code removeError;
+    std::filesystem::remove(savedPath, removeError);
+
+    context.expect(saveAudioMetadata(*result, metadataPath),
+                   "metadata is saved to a non-ASCII path");
+
+    std::error_code sizeError;
+    const auto savedSize = std::filesystem::file_size(savedPath, sizeError);
+    context.expect(!sizeError && savedSize > 0, "the saved metadata exists at the non-ASCII path");
+
+    std::ifstream file(savedPath);
+    const std::string content((std::istreambuf_iterator<char>(file)),
+                              std::istreambuf_iterator<char>());
+    context.expect(content.find("\"originalFormat\":\"wav\"") != std::string::npos,
+                   "the saved metadata is readable from the non-ASCII path");
+}
+
 void testCorpusDiagnostics(TestContext& context) {
     using vocalmelody::audio::AudioFileImporter;
 
@@ -111,5 +150,6 @@ int main() {
     testSaveMetadata(context);
     testSourceFileUnchanged(context);
     testCorpusDiagnostics(context);
+    testSaveMetadataAccentedPath(context);
     return context.result();
 }

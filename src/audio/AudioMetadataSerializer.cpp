@@ -2,6 +2,7 @@
 
 #include <vocalmelody/common/JsonWriter.h>
 
+#include <filesystem>
 #include <fstream>
 
 namespace vocalmelody::audio {
@@ -71,7 +72,10 @@ std::string audioMetadataToJson(const AudioImportResult& result) {
 }
 
 bool saveAudioMetadata(const AudioImportResult& result, const std::string& path) {
-    std::ofstream file(path, std::ios::binary);
+    // Ouverture par std::filesystem::path : les chemins non-ASCII (UTF-8 fournis
+    // par juce::File) échoueraient avec un ofstream sur chaîne étroite.
+    const auto utf8Path = std::filesystem::path(std::u8string(path.begin(), path.end()));
+    std::ofstream file(utf8Path, std::ios::binary);
     if (!file.is_open()) {
         return false;
     }

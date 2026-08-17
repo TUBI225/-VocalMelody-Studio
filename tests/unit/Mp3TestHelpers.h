@@ -3,6 +3,7 @@
 #include "WavTestHelpers.h"
 
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -23,7 +24,8 @@ inline std::vector<std::uint8_t> readMp3TestVector() {
 
 inline void copyMp3TestVector(const std::string& path) {
     const auto data = readMp3TestVector();
-    std::ofstream file(path, std::ios::binary);
+    std::ofstream file(std::filesystem::path(std::u8string(path.begin(), path.end())),
+                       std::ios::binary);
     file.write(reinterpret_cast<const char*>(data.data()),
                static_cast<std::streamsize>(data.size()));
 }

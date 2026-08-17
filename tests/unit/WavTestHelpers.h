@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -31,7 +32,8 @@ inline void writePcm16Wav(const std::string& path, const int sampleRate, const i
     const int dataSize = numFrames * blockAlign;
     const int byteRate = sampleRate * blockAlign;
 
-    std::ofstream file(path, std::ios::binary);
+    std::ofstream file(std::filesystem::path(std::u8string(path.begin(), path.end())),
+                       std::ios::binary);
     file.write("RIFF", 4);
     writeInt32(file, 36 + dataSize);
     file.write("WAVE", 4);
@@ -57,6 +59,43 @@ inline void writePcm16Wav(const std::string& path, const int sampleRate, const i
 }
 
 inline std::string tempFilePath(const std::string& name) { return std::string(".\\") + name; }
+
+// Chemin avec caractères accentués (« éàü » en UTF-8, écrit en hexadécimal pour
+// rester indépendant de l'encodage source du compilateur).
+inline std::string unicodeTempFilePath(const std::string& name) {
+    return std::string(".\\vms_unicode_\xC3\xA9\xC3\xA0\xC3\xBC_") + name;
+}
+
+// Écrit un en-tête WAV minimal déclarant un nombre de canaux et de trames
+// arbitraires (métadonnées forgées, pas de données réelles attendues).
+inline void writeForgedWavHeader(const std::string& path, const std::uint16_t channels,
+                                 const std::int64_t frames) {
+    constexpr int bytesPerSample = 2;
+    constexpr int sampleRate = 44100;
+    const std::int64_t blockAlign = static_cast<std::int64_t>(channels) * bytesPerSample;
+    const std::int64_t dataSize = frames * blockAlign;
+    const std::int64_t byteRate = static_cast<std::int64_t>(sampleRate) * blockAlign;
+
+    std::ofstream file(std::filesystem::path(std::u8string(path.begin(), path.end())),
+                       std::ios::binary);
+    file.write("RIFF", 4);
+    writeInt32(file, static_cast<std::int32_t>(36 + dataSize));
+    file.write("WAVE", 4);
+    file.write("fmt ", 4);
+    writeInt32(file, 16);
+    writeInt16(file, 1);
+    writeInt16(file, static_cast<std::int16_t>(channels));
+    writeInt32(file, sampleRate);
+    writeInt32(file, static_cast<std::int32_t>(byteRate));
+    writeInt16(file, static_cast<std::int16_t>(blockAlign));
+    writeInt16(file, 16);
+    file.write("data", 4);
+    writeInt32(file, static_cast<std::int32_t>(dataSize));
+    // Quelques octets de données réels pour que le fichier ne soit pas vide.
+    for (std::int64_t i = 0; i < 32 && i < dataSize; ++i) {
+        file.put(0);
+    }
+}
 
 inline std::string fnv1aFileHash(const std::string& path) {
     std::ifstream file(path, std::ios::binary);

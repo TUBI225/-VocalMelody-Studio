@@ -106,6 +106,21 @@ void testDecodeTruncatedCbrDocumented(TestContext& context) {
     }
 }
 
+void testDecodeAccentedPath(TestContext& context) {
+    const std::string path =
+        vocalmelody::testing::unicodeTempFilePath("vms_test_layer3_accent.mp3");
+    vocalmelody::testing::copyMp3TestVector(path);
+
+    const auto result = Mp3Decoder::decodeFile(path);
+    context.expect(result.has_value(), "a valid mp3 on a non-ASCII path decodes successfully");
+    if (result.has_value()) {
+        context.expect(result->sampleRate > 0, "the sample rate is detected on the accented path");
+        context.expect(result->totalFrames > 0, "frames are decoded on the accented path");
+        context.expect(result->monoSamples.size() == static_cast<std::size_t>(result->totalFrames),
+                       "mono samples match the frame count on the accented path");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -115,5 +130,6 @@ int main() {
     testDecodeEmptyAndCorruptedFile(context);
     testDecodeNonExistentFile(context);
     testDecodeTruncatedCbrDocumented(context);
+    testDecodeAccentedPath(context);
     return context.result();
 }
