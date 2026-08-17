@@ -1200,3 +1200,10 @@ T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus
 - Run `32045569757` : Windows Debug RÉUSSI en 4 min 03 s et Windows Release RÉUSSI en 5 min 40 s.
 - Chaque job valide le formatage, télécharge et vérifie JUCE/minimp3, configure, compile et exécute 10/10 tests.
 - La PR #9 reste en brouillon dans l'attente de la décision de passage en revue/fusion.
+
+## Fusion de la Pull Request #9
+
+- PR #9 passée de brouillon à prête pour révision après validation des checks.
+- CI finale de la tête `43f2e94` : run `32046076629`, Windows Debug (3 min 39 s) et Release (5 min 50 s) RÉUSSIS, 10/10 tests.
+- Fusion avec historique préservé : commit `ab0660e` (`Merge pull request #9 from TUBI225/fix/audit-hardening-async-import`).
+- Branche `fix/audit-hardening-async-import` supprimée localement et sur l'origine ; `main` local synchronisé avec `origin/main`.

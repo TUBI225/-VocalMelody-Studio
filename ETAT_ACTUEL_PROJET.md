@@ -6,13 +6,13 @@
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend PARTIELLE ; phase 2 Pitch Benchmark en cours — socle fusionné)
 - Plateforme cible : Windows x64
-- Branche Git de travail : `fix/audit-hardening-async-import`, issue de `main` après fusion des Pull Requests #1 à #8
-- Dernier commit poussé sur `main` : `0aaaec1` - docs(pr): trace la fusion de la Pull Request 8
-- Dernière mise à jour : 2026-08-17 (synchronisation PR #6 à #8, contrat d'import durci, dépendances publiques et worker annulable en validation locale)
+- Branche Git : `main`, propre et synchronisée avec `origin/main` (Pull Requests #1 à #9 fusionnées)
+- Dernier commit poussé sur `main` : `ab0660e` - fusion de la Pull Request #9
+- Dernière mise à jour : 2026-08-17 (PR #9 fusionnée : contrat d'import durci, dépendances publiques, worker annulable et CI résiliente)
 
 ## État général
 
-La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV/MP3 réel, analyse mono, diagnostics d'échec structurés, métadonnées JSON, resampling 16 kHz, transport de lecture et décodage MP3 sont implémentés. L'import est borné (1 Gio, 30 millions de trames, 64 canaux et 100 millions d'échantillons décodés), compatible avec les chemins Unicode testés, calcule un SHA-256 avant/après et rejette toute modification concurrente. Sur la PR #9, il s'exécute dans `AudioImportWorker`, expose huit étapes de progression et accepte l'annulation coopérative. Le contrat `AudioImportOutcome` est porté par `std::variant` : un accès au mauvais état lève `std::bad_variant_access`. Les 10 suites CTest passent localement en Debug et Release ; la CI de la PR #9 (`32045569757`) est verte dans les deux configurations. Restent : fusion de la PR, validation manuelle de la lecture, corpus musical réel et M4A.
+La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio Frontend** est PARTIELLE : import WAV/MP3 réel, analyse mono, diagnostics d'échec structurés, métadonnées JSON, resampling 16 kHz, transport de lecture et décodage MP3 sont implémentés. L'import est borné (1 Gio, 30 millions de trames, 64 canaux et 100 millions d'échantillons décodés), compatible avec les chemins Unicode testés, calcule un SHA-256 avant/après et rejette toute modification concurrente. Depuis la PR #9 fusionnée, il s'exécute dans `AudioImportWorker`, expose huit étapes de progression et accepte l'annulation coopérative. Le contrat `AudioImportOutcome` est porté par `std::variant` : un accès au mauvais état lève `std::bad_variant_access`. Les 10 suites CTest passent localement en Debug et Release ; la CI finale de la PR #9 (`32046076629`) est verte dans les deux configurations. Restent : validation manuelle de la lecture, corpus musical réel et M4A.
 
 Le **socle de la phase 2 (Pitch Benchmark)** est implémenté, validé et **fusionné dans `main` (PR #3, merge commit `466f4cb`)** : structures `PitchFrame` / `PitchCandidate` / `PitchDistributionFrame` et types forts `MidiPitch` / `Cents` dans `src/common`, interface `IPitchEstimator` et baseline `AutocorrelationPitchEstimator` dans le nouveau module `src/pitch` (sans JUCE). La correction T-102.1 est fusionnée par la PR #4 (`41463c9`). T-102.2 est fusionnée par la PR #5 (`70b801f`) : le sinc/Blackman polyphasé remplace le chemin d'analyse linéaire et `analysisVersion` passe à 3 ; Debug/Release 8/8, formatage 35/35 et CI finale sont verts. Le benchmark proprement dit reste à réaliser.
 
@@ -49,7 +49,7 @@ L'**audit du 2026-08-16** (`AUDIT_2026-08-16.md`, non exhaustif) a été consign
 
 - Aucun crash reproduit sur le corpus automatisé. Cela ne constitue pas une garantie d'absence d'erreur.
 - R-003 : encore OUVERT mais réduit par les plafonds d'import et les tests vide/court/long/corrompu ; fuzzing restant.
-- R-011 : RÉDUIT SUR LA BRANCHE DE TRAVAIL - l'import quitte le thread UI et devient annulable ; le signal mono complet reste en mémoire sous plafond.
+- R-011 : RÉDUIT DANS `main` - l'import quitte le thread UI et devient annulable ; le signal mono complet reste en mémoire sous plafond.
 - R-001 : RÉDUIT - builds locaux et CI réussis (MSVC 19.44, CMake 4.4.2).
 - R-007 : RÉSOLU - toolchain installée, téléchargement JUCE vérifié (SHA-256) puis configuration hors ligne, Git installé et socle commité/poussé.
 - R-008 : régime de licence JUCE à décider avant distribution.

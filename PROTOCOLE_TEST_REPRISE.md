@@ -15,7 +15,7 @@ Contrôle initial du 2026-08-14 pour T-101.4 : CONCERNÉ. Mise à jour du 2026-0
 - Résultat attendu : aucun artefact corrompu ; reprise au dernier point sûr ou redémarrage explicite ; état utilisateur cohérent.
 - Résultat obtenu : annulation coopérative observée ; retour `ImportError::Cancelled`, aucun `AudioImportResult` accessible, puis nouvel import possible.
 - Preuves : test CTest `audio.file_import` (`AudioImportWorker` hors thread appelant et annulation pendant le rééchantillonnage).
-- Version testée : branche `fix/audit-hardening-async-import` avant publication.
+- Version testée : PR #9 fusionnée dans `main` (`ab0660e`).
 - Date : 2026-08-17.
 - Statut : PARTIELLEMENT EXÉCUTÉ — arrêt applicatif brutal et reprise après redémarrage restent à tester.
 
