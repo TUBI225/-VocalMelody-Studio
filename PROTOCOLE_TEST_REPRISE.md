@@ -2,9 +2,9 @@
 
 ## Portée actuelle
 
-Aucune opération de reprise n'est implémentée. L'import/analyse audio et l'écriture de métadonnées existent désormais, mais restent synchrones et sans point de reprise. Tous les scénarios ci-dessous restent NON EXÉCUTÉS ; leur résultat est inconnu.
+L'import/analyse audio est désormais exécuté sur un worker annulable. L'annulation est testée et ne publie aucun résultat partiel ; une nouvelle demande recommence depuis le début. La reprise à un point intermédiaire n'est pas implémentée. L'écriture de métadonnées reste synchrone et sans remplacement atomique.
 
-Contrôle du 2026-08-14 pour T-101.4 : CONCERNÉ. PR-001 s'applique à l'analyse d'un fichier long et PR-003 à l'écriture JSON ; aucun des deux n'a été exécuté. `saveAudioMetadata` écrit directement la destination et n'offre pas encore de remplacement atomique : ces métadonnées ne doivent pas être traitées comme sauvegarde projet fiable.
+Contrôle initial du 2026-08-14 pour T-101.4 : CONCERNÉ. Mise à jour du 2026-08-17 : le chemin d'annulation coopérative de PR-001 est automatisé, mais l'arrêt brutal et la reprise après redémarrage ne le sont pas. PR-003 reste non exécuté. `saveAudioMetadata` écrit directement la destination et n'offre pas encore de remplacement atomique : ces métadonnées ne doivent pas être traitées comme sauvegarde projet fiable.
 
 ## PR-001 - Interruption d'une analyse audio
 
@@ -13,11 +13,11 @@ Contrôle du 2026-08-14 pour T-101.4 : CONCERNÉ. PR-001 s'applique à l'analyse
 - Préparation : activer les traces et identifier le répertoire temporaire.
 - Étapes : démarrer l'analyse ; interrompre le processus au milieu ; relancer l'application ; rouvrir le projet ; demander la reprise.
 - Résultat attendu : aucun artefact corrompu ; reprise au dernier point sûr ou redémarrage explicite ; état utilisateur cohérent.
-- Résultat obtenu : NON EXÉCUTÉ.
-- Preuves : aucune.
-- Version testée : aucune.
-- Date : non exécuté.
-- Statut : NON EXÉCUTÉ.
+- Résultat obtenu : annulation coopérative observée ; retour `ImportError::Cancelled`, aucun `AudioImportResult` accessible, puis nouvel import possible.
+- Preuves : test CTest `audio.file_import` (`AudioImportWorker` hors thread appelant et annulation pendant le rééchantillonnage).
+- Version testée : branche `fix/audit-hardening-async-import` avant publication.
+- Date : 2026-08-17.
+- Statut : PARTIELLEMENT EXÉCUTÉ — arrêt applicatif brutal et reprise après redémarrage restent à tester.
 
 ## PR-002 - Interruption d'un export MIDI
 

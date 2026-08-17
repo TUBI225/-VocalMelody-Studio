@@ -1721,7 +1721,7 @@ La présente section actualise la section 98 :
 Limites de modèle encore ouvertes :
 
 - `monoAnalysisPath` reste vide car aucun artefact mono persistant n'est encore produit ;
-- `analysisSampleRate` vaut 16 000 Hz ; `analysisVersion=2` identifie l'ancienne interpolation linéaire et `analysisVersion=3` le sinc/Blackman polyphasé anti-repliement ;
+- `analysisSampleRate` vaut 16 000 Hz ; `analysisVersion=2` identifie l'ancienne interpolation linéaire, `analysisVersion=3` le premier sinc/Blackman polyphasé et `analysisVersion=4` le noyau renforcé de 67 taps avec marge 0,78 ;
 - `warnings` n'est pas encore alimenté ;
 - `AudioFormat::M4a` exprime un format visé, pas une preuve que le codec est disponible sous Windows ;
 - le schéma JSON n'a pas encore de numéro de version racine ni de migration ; il ne doit donc pas être considéré comme format projet stable.
@@ -1753,6 +1753,12 @@ Validation :
 - Test CTest `pitch.structures` : RÉUSSI (bornes des structures, `frequencyHzToMidi`, `MidiPitch`, `Cents`).
 - Test CTest `pitch.autocorrelation` : RÉUSSI (sinus 440 Hz à 16 kHz détecté dans ±10 Hz, bornes 80/2000 Hz, signal vide, sample rate invalide, usage via l'interface).
 - Build Debug : réussi, aucun avertissement ; CTest global 8/8 ; clang-format 35/35.
+
+## 102. Contrat d'import et progression
+
+`AudioImportOutcome` représente un état exclusif `AudioImportResult | ImportError` au moyen de `std::variant`. `value()` sur un échec et `error()` sur un succès lèvent `std::bad_variant_access`, ce qui empêche de lire silencieusement un état incohérent. Les onze erreurs incluent désormais `Cancelled` et `InternalError`.
+
+`AudioImportProgress` associe une fraction bornée à une étape : validation, empreinte initiale, décodage, analyse source, rééchantillonnage, analyse du résultat, vérification finale et finalisation. La progression n'est pas persistée et ne constitue pas un résultat de domaine.
 
 Limites du socle (le benchmark reste à faire, feuille de route phase 2) :
 

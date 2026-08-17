@@ -2,8 +2,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <span>
+#include <stop_token>
 #include <string>
 #include <vector>
 
@@ -16,6 +18,8 @@ struct DecodedAudioData final {
     std::vector<float> monoSamples;
     std::int64_t totalFrames{0};
 };
+
+using Mp3ProgressCallback = std::function<void(double)>;
 
 class Mp3Decoder final {
   public:
@@ -30,10 +34,12 @@ class Mp3Decoder final {
     // la durée d'origine ; minimp3 ne fournit aucun signal d'erreur pour ce
     // cas, donc aucune détection fiable n'est possible au niveau du décodeur.
     [[nodiscard]] static std::optional<DecodedAudioData>
-    decodeFile(const std::string& filePath) noexcept;
+    decodeFile(const std::string& filePath, std::stop_token stopToken = {},
+               Mp3ProgressCallback progressCallback = {}) noexcept;
 
     [[nodiscard]] static std::optional<DecodedAudioData>
-    decodeMemory(std::span<const std::uint8_t> data) noexcept;
+    decodeMemory(std::span<const std::uint8_t> data, std::stop_token stopToken = {},
+                 Mp3ProgressCallback progressCallback = {}) noexcept;
 };
 
 } // namespace vocalmelody::audio

@@ -1,13 +1,22 @@
 #include <vocalmelody/audio/AudioFileImporter.h>
+#include <vocalmelody/audio/AudioImportWorker.h>
 
 #include "Mp3TestHelpers.h"
 #include "TestContext.h"
 #include "WavTestHelpers.h"
 
+#include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <condition_variable>
+#include <filesystem>
 #include <fstream>
 #include <limits>
+#include <mutex>
+#include <stop_token>
 #include <string>
+#include <thread>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -232,6 +241,172 @@ void testImportForgedHeaders(TestContext& context) {
                    "a wav exceeding the total decoded sample cap is rejected");
 }
 
+void testReachableImportErrors(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+    using vocalmelody::audio::ImportError;
+    namespace fs = std::filesystem;
+
+    const std::string emptyPath = vocalmelody::testing::tempFilePath("vms_test_zero_bytes.wav");
+    std::ofstream(emptyPath, std::ios::binary).close();
+    const auto empty = AudioFileImporter{}.import(emptyPath);
+    context.expect(!empty && empty.error() == ImportError::EmptyFile,
+                   "a physical zero-byte file reports EmptyFile");
+
+    const std::string largePath = vocalmelody::testing::tempFilePath("vms_test_sparse_large.wav");
+    std::ofstream(largePath, std::ios::binary).put('\0');
+    std::error_code resizeError;
+    fs::resize_file(largePath,
+                    static_cast<std::uintmax_t>(AudioFileImporter::kMaxFileSizeBytes) + 1U,
+                    resizeError);
+    context.expect(!resizeError, "the sparse oversized fixture is created");
+    if (!resizeError) {
+        const auto large = AudioFileImporter{}.import(largePath);
+        context.expect(!large && large.error() == ImportError::FileTooLarge,
+                       "a file above one GiB reports FileTooLarge");
+    }
+    fs::remove(largePath, resizeError);
+
+    const std::string analysisPath =
+        vocalmelody::testing::tempFilePath("vms_test_analysis_limit.wav");
+    vocalmelody::testing::writePcm16Wav(analysisPath, 1, 1, {std::vector<float>(7000U, 0.1F)});
+    const auto analysis = AudioFileImporter{}.import(analysisPath);
+    context.expect(!analysis && analysis.error() == ImportError::AnalysisFailed,
+                   "an excessive resampling result reports AnalysisFailed");
+
+    const std::string modifiedPath =
+        vocalmelody::testing::tempFilePath("vms_test_modified_during_import.wav");
+    vocalmelody::testing::writePcm16Wav(modifiedPath, 8000, 1, {std::vector<float>(8000U, 0.1F)});
+    bool modified = false;
+    const auto changed = AudioFileImporter{}.import(
+        modifiedPath, {}, [&modifiedPath, &modified](const auto& progress) {
+            if (!modified && progress.stage == vocalmelody::audio::ImportStage::Decoding) {
+                std::ofstream file(modifiedPath, std::ios::binary | std::ios::app);
+                file.put('\0');
+                modified = true;
+            }
+        });
+    context.expect(modified, "the modification fixture mutates during import");
+    context.expect(!changed && changed.error() == ImportError::FileModifiedDuringImport,
+                   "a source mutation reports FileModifiedDuringImport");
+
+    std::stop_source cancellation;
+    const auto cancelled = AudioFileImporter{}.import(
+        modifiedPath, cancellation.get_token(), [&cancellation](const auto& progress) {
+            if (progress.stage == vocalmelody::audio::ImportStage::HashingSource) {
+                cancellation.request_stop();
+            }
+        });
+    context.expect(!cancelled && cancelled.error() == ImportError::Cancelled,
+                   "a cooperative stop reports Cancelled");
+}
+
+void testOutcomeContractAndMessages(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+    using vocalmelody::audio::AudioImportOutcome;
+    using vocalmelody::audio::ImportError;
+
+    const auto failure = AudioImportOutcome::failure(ImportError::DecodeFailed);
+    bool valueThrew = false;
+    try {
+        static_cast<void>(failure.value());
+    } catch (const std::bad_variant_access&) {
+        valueThrew = true;
+    }
+    context.expect(valueThrew, "value() rejects access to a failed outcome");
+
+    const std::string path = vocalmelody::testing::tempFilePath("vms_test_outcome.wav");
+    vocalmelody::testing::writePcm16Wav(path, 8000, 1, {std::vector<float>(8000U, 0.1F)});
+    const auto success = AudioFileImporter{}.import(path);
+    bool errorThrew = false;
+    try {
+        static_cast<void>(success.error());
+    } catch (const std::bad_variant_access&) {
+        errorThrew = true;
+    }
+    context.expect(success.has_value() && errorThrew,
+                   "error() rejects access to a successful outcome");
+
+    constexpr ImportError errors[]{
+        ImportError::FileNotFound,   ImportError::EmptyFile,
+        ImportError::FileTooLarge,   ImportError::UnsupportedFormat,
+        ImportError::DecodeFailed,   ImportError::FileModifiedDuringImport,
+        ImportError::AnalysisFailed, ImportError::InvalidMetadata,
+        ImportError::OutOfMemory,    ImportError::Cancelled,
+        ImportError::InternalError};
+    for (const auto error : errors) {
+        context.expect(vocalmelody::audio::importErrorToString(error) != "Erreur inconnue",
+                       "every declared import error has a user-facing message");
+        context.expect(AudioImportOutcome::failure(error).error() == error,
+                       "the outcome preserves every declared error");
+    }
+}
+
+void testProgressAndWorker(TestContext& context) {
+    using vocalmelody::audio::AudioFileImporter;
+    using vocalmelody::audio::AudioImportOutcome;
+    using vocalmelody::audio::AudioImportWorker;
+    using vocalmelody::audio::ImportStage;
+
+    const std::string path = vocalmelody::testing::tempFilePath("vms_test_worker.wav");
+    vocalmelody::testing::writePcm16Wav(path, 8000, 1, {std::vector<float>(8000U, 0.1F)});
+    std::vector<ImportStage> stages;
+    const auto direct = AudioFileImporter{}.import(
+        path, {}, [&stages](const auto& progress) { stages.push_back(progress.stage); });
+    context.expect(direct.has_value(), "an import with progress succeeds");
+    context.expect(
+        std::find(stages.begin(), stages.end(), ImportStage::Decoding) != stages.end() &&
+            std::find(stages.begin(), stages.end(), ImportStage::Resampling) != stages.end() &&
+            std::find(stages.begin(), stages.end(), ImportStage::Finalizing) != stages.end(),
+        "progress exposes decoding, resampling and finalization stages");
+
+    std::mutex mutex;
+    std::condition_variable completed;
+    bool done = false;
+    bool workerSucceeded = false;
+    const auto callerThread = std::this_thread::get_id();
+    std::thread::id callbackThread;
+    AudioImportWorker worker;
+    worker.start(path, {}, [&](AudioImportOutcome outcome) {
+        {
+            const std::scoped_lock lock(mutex);
+            workerSucceeded = outcome.has_value();
+            callbackThread = std::this_thread::get_id();
+            done = true;
+        }
+        completed.notify_one();
+    });
+    {
+        std::unique_lock lock(mutex);
+        completed.wait_for(lock, std::chrono::seconds(10), [&done] { return done; });
+    }
+    context.expect(done && workerSucceeded, "the worker completes a valid import");
+    context.expect(callbackThread != callerThread, "the worker runs outside the caller thread");
+
+    done = false;
+    bool workerCancelled = false;
+    worker.start(
+        path,
+        [&worker](const auto& progress) {
+            if (progress.stage == ImportStage::Resampling && progress.fraction > 0.0) {
+                worker.requestCancel();
+            }
+        },
+        [&](AudioImportOutcome outcome) {
+            {
+                const std::scoped_lock lock(mutex);
+                workerCancelled =
+                    !outcome && outcome.error() == vocalmelody::audio::ImportError::Cancelled;
+                done = true;
+            }
+            completed.notify_one();
+        });
+    {
+        std::unique_lock lock(mutex);
+        completed.wait_for(lock, std::chrono::seconds(10), [&done] { return done; });
+    }
+    context.expect(done && workerCancelled, "the worker cooperatively cancels an active import");
+}
+
 } // namespace
 
 int main() {
@@ -247,5 +422,8 @@ int main() {
     testImportInvalidFile(context);
     testImportMissingFile(context);
     testImportForgedHeaders(context);
+    testReachableImportErrors(context);
+    testOutcomeContractAndMessages(context);
+    testProgressAndWorker(context);
     return context.result();
 }

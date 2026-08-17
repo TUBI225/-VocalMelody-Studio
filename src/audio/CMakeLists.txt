@@ -1,5 +1,6 @@
 add_library(vocalmelody_audio STATIC
     AudioFileImporter.cpp
+    AudioImportWorker.cpp
     AudioMetadataSerializer.cpp
     Mp3Decoder.cpp
 )

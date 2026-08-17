@@ -110,4 +110,10 @@ Ces durées couvrent des suites de tests et non le seul filtre. Le coût CPU/RAM
 
 - Contrepartie : la coupure -6 dB passe de ~7,3 kHz à ~6,3 kHz ; le contenu 6-7 kHz subit -4 à -18 dB selon la fréquence. Acceptable pour l'analyse vocale (fondamentale et harmoniques basses), tracé comme limite.
 - Impact temps mesuré : CTest Debug 8/8 en 6,84 s et `audio.file_import` en 3,86 s (contre 3,89 s avant) ; le coût du noyau 67 taps est négligeable devant le décodage et le hachage sur le corpus actuel. Le coût CPU isolé sur un fichier de taille maximale (30 M trames) reste NON MESURÉ.
+
+## Worker d'import et contrat renforcé - 2026-08-17
+
+- CTest Debug final : 10/10 en 11,15 s ; `audio.file_import` 5,48 s.
+- CTest Release final : 10/10 en 7,02 s ; `audio.file_import` 3,95 s.
+- Le décodage JUCE utilise un tampon multicanal de 8192 trames, puis conserve le signal mono complet. Le pic RAM sur un fichier maximal et la latence d'annulation sur corpus réel restent NON MESURÉS.
 - Bande critique 8,5-9,5 kHz (auparavant non testée) couverte en permanence par `SignalAnalysisTests` (48 -> 16 kHz et 96 -> 16 kHz).

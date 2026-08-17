@@ -1580,7 +1580,7 @@ Modules effectivement présents :
 
 - `vocalmelody_common` : types forts, `AudioSource`, `AudioAnalysisResult`, `JsonWriter` ; aucune dépendance JUCE.
 - `vocalmelody_frontend` : analyse de signal pure (RMS, peak, silence, clipping, bruit approximatif, downmix).
-- `vocalmelody_audio` : décodage JUCE, import borné, SHA-256, production des structures du domaine et métadonnées JSON.
+- `vocalmelody_audio` : décodage JUCE/minimp3, import borné, chemins Unicode, SHA-256, résultat d'import structuré, structures du domaine et métadonnées JSON.
 - `VocalMelodyStudio` : sélection de fichier, diagnostics et transport de lecture JUCE.
 
 Flux implémenté :
@@ -1588,7 +1588,8 @@ Flux implémenté :
 fichier audio
 → validation taille/format/durée
 → SHA-256 avant décodage
-→ décodage JUCE en mémoire
+→ worker `std::jthread` annulable
+→ décodage JUCE par blocs
 → moyenne de tous les canaux vers mono
 → rééchantillonnage sinc/Blackman polyphasé borné à 16 kHz
 → diagnostics
@@ -1600,22 +1601,24 @@ Garde-fous actuels :
 
 - taille sur disque limitée à 1 Gio ;
 - longueur décodée limitée à 30 millions de trames ;
+- maximum de 64 canaux et 100 millions d'échantillons multicanaux avant allocation ;
 - rejet d'un fichier vide, d'une lecture incomplète ou d'un changement de contenu pendant l'import ;
-- exceptions d'allocation ou de codec converties en échec d'import, sans terminaison du processus ;
+- exceptions d'allocation et exceptions internes distinguées et converties en échec d'import, sans terminaison du processus ;
 - durée d'import générée à l'exécution et identifiant stable dérivé du SHA-256 ;
 - sélecteur asynchrone protégé contre la destruction du composant ;
+- progression structurée par étape et annulation coopérative via `std::stop_token` ;
 - lecture désactivée si aucun périphérique audio n'est disponible.
 
 Limites non masquées :
 
-- l'import et l'analyse s'exécutent encore sur le thread d'interface et chargent le signal en mémoire ;
-- le rééchantillonnage à 16 kHz utilise désormais un sinc fenêtré Blackman de 33 taps, avec phases dérivées du PGCD des sample rates et marge de coupure de 90 % en downsampling ; les sinusoïdes automatisées réduisent R-012, mais le corpus vocal et les mesures isolées restent nécessaires ;
+- le décodage est lu par blocs sur un worker, mais le signal mono résultant reste chargé en mémoire sous plafond ;
+- le rééchantillonnage à 16 kHz utilise un sinc fenêtré Blackman de 67 taps, avec phases dérivées du PGCD des sample rates et marge de coupure de 0,78 en downsampling ; la bande critique est testée, mais les chirps, le corpus vocal et les mesures isolées restent nécessaires ;
 - WAV est couvert par tests synthétiques, MP3 n'est pas couvert par un corpus réel et M4A n'est pas garanti par les formats JUCE enregistrés sous Windows ;
 - la lecture n'a pas encore été validée manuellement sur un périphérique réel ;
-- l'API d'import retourne encore `std::nullopt` sans code d'erreur détaillé.
+- l'API d'import retourne un `AudioImportOutcome` fondé sur `std::variant` et distingue onze catégories d'échec affichables dans l'interface, dont annulation et erreur interne.
 
 ## 64. Décodage MP3 isolé - T-101.8
 
-Le chemin `.mp3` passe d'abord par `Mp3Decoder`, adaptateur interne autour de la version épinglée de `minimp3`. Le décodeur lit les trames par blocs, valide le nombre de canaux, le sample rate et le plafond de 30 millions de trames, puis produit directement un signal mono. Il ne conserve pas simultanément le PCM brut, une copie par canal et la copie mono. La fermeture du contexte natif est garantie par RAII, y compris en cas d'exception d'allocation.
+Le chemin `.mp3` passe d'abord par `Mp3Decoder`, adaptateur interne autour de la version épinglée de `minimp3`. Le décodeur lit les trames par blocs, valide le nombre de canaux, le sample rate et le plafond de 30 millions de trames, puis produit directement un signal mono. Il utilise l'API large de minimp3 sous Windows pour les chemins Unicode. La fermeture du contexte natif est garantie par RAII. Un flux CBR tronqué en fin de fichier peut être accepté avec une durée décodée réduite : comportement mesuré, testé et documenté comme invariant du décodeur.
 
 Si `minimp3` refuse un fichier portant l'extension `.mp3`, l'importeur peut tenter le lecteur JUCE. Ce repli n'est jamais utilisé pour une autre extension, afin d'éviter qu'un contenu soit décodé par hasard puis étiqueté avec le mauvais format. Le M4A reste absent : l'énumération `AudioFormat::M4a` exprime une cible de modèle, pas une capacité disponible.

@@ -1261,6 +1261,9 @@ Critères de validation :
 Travail restant :
 - compléter la preuve MP3 par un corpus musical/utilisateur et la CI ; choisir et auditer séparément la stratégie M4A (Media Foundation adapté, FFmpeg ou autre) ;
 - compléter le benchmark du rééchantillonneur filtré sur chirps/corpus vocal et implémenter l'analyse par blocs pour les fichiers longs ;
-- exposer des erreurs d'import détaillées à l'interface ;
+- [VALIDÉ] exposer des erreurs d'import détaillées à l'interface (`ImportError`/`AudioImportOutcome`, PR #8) ;
+- [VALIDÉ LOCALEMENT] durcir `AudioImportOutcome` avec un état exclusif `std::variant` et tester toutes les erreurs déclenchables par entrée/annulation ;
+- [VALIDÉ LOCALEMENT] déplacer l'import sur un worker annulable avec progression par étape ;
+- [VALIDÉ LOCALEMENT] propager `Common` dans les interfaces CMake publiques de Frontend/Pitch et compiler deux consommateurs dédiés ;
 - exécuter le corpus réel et la validation manuelle de lecture ;
 - compléter la validation interactive et le corpus avant de déclarer la phase 1 terminée.

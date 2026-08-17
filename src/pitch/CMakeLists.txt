@@ -11,7 +11,7 @@ target_include_directories(
 
 target_link_libraries(
     vocalmelody_pitch
-    PRIVATE
+    PUBLIC
         VocalMelody::Common
 )
 

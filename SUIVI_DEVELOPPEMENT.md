@@ -1160,4 +1160,27 @@ Les diagnostics ont exposé un bug latent de test : le fichier `.bin` était éc
 
 Les constats C-01, C-02, C-04, C-05 et C-06 de l'audit du 2026-08-16 sont désormais intégrés à `main`.
 
+# 2026-08-17 - Durcissement de l'import et exécution hors interface
+
+## Objectif
+
+Synchroniser la documentation avec les PR #6 à #8, rendre le contrat d'import impossible à lire dans le mauvais état, corriger les interfaces CMake publiques et supprimer le blocage de l'interface pendant l'import.
+
+## Implémentation
+
+- Branche locale `fix/audit-hardening-async-import`, créée depuis `main` à `0aaaec1` ; aucune publication distante à ce stade.
+- `AudioImportOutcome` utilise `std::variant<AudioImportResult, ImportError>` ; `Cancelled` et `InternalError` complètent les causes, et `std::bad_alloc` reste distinguée.
+- Toutes les erreurs déclenchables de façon déterministe par une entrée ou une annulation sont testées : fichier absent/vide/trop grand, format non pris en charge, décodage, modification concurrente, analyse et annulation. Les erreurs de construction de métadonnées, mémoire et exception interne sont couvertes au niveau du contrat, car elles ne sont pas injectables sûrement par un fichier de test.
+- `Frontend` et `Pitch` propagent `VocalMelody::Common` en `PUBLIC` ; deux exécutables consommateurs ne lient volontairement que la cible publique.
+- `AudioImportWorker` exécute l'import dans un `std::jthread`, relaie la progression, permet l'annulation et rejoint le travail à la destruction. L'UI propose « Annuler » et reçoit les callbacks sur le thread de messages via `SafePointer`.
+- Le décodage JUCE traite des blocs de 8192 trames ; le hachage, minimp3, les analyses et le sinc vérifient le `std::stop_token`.
+
+## Validation locale
+
+- Build Debug et Release : RÉUSSIS avec avertissements traités comme erreurs.
+- CTest Debug final : 10/10 en 11,15 s ; Release final : 10/10 en 7,02 s.
+- Tests nouveaux : consommateurs CMake Frontend/Pitch, contrat variant, erreurs atteignables, progression, exécution hors thread appelant et annulation du worker.
+- `clang-format --dry-run --Werror` sur tous les fichiers C++/H et `git diff --check` : RÉUSSIS.
+- CI : NON EXÉCUTÉE, branche non poussée.
+
 T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.
