@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -74,6 +75,37 @@ void testDecodeNonExistentFile(TestContext& context) {
                    "a non-existent file is rejected safely");
 }
 
+void testDecodeTruncatedCbrDocumented(TestContext& context) {
+    // Invariant documenté (Mp3Decoder.h) : un flux CBR tronqué en fin de
+    // fichier se décode sans erreur, le dernier frame incomplet étant ignoré
+    // (comportement standard des décodeurs ; minimp3 ne signale pas cette
+    // condition). Ce test fige le comportement : décodage réussi avec un
+    // nombre de frames réduit, sans crash.
+    const std::string fullPath = vocalmelody::testing::tempFilePath("vms_test_layer3_full.mp3");
+    vocalmelody::testing::copyMp3TestVector(fullPath);
+    const auto full = Mp3Decoder::decodeFile(fullPath);
+    context.expect(full.has_value(), "the full pinned vector decodes");
+
+    const std::string path = vocalmelody::testing::tempFilePath("vms_test_layer3_truncated.mp3");
+    const auto data = vocalmelody::testing::readMp3TestVector();
+    const auto truncatedSize = data.size() > 1024 ? data.size() - 512 : data.size() / 2;
+    const std::vector<std::uint8_t> truncated(data.begin(), data.begin() + truncatedSize);
+    {
+        std::ofstream file(std::filesystem::path(std::u8string(path.begin(), path.end())),
+                           std::ios::binary);
+        file.write(reinterpret_cast<const char*>(truncated.data()),
+                   static_cast<std::streamsize>(truncated.size()));
+    }
+
+    const auto result = Mp3Decoder::decodeFile(path);
+    context.expect(result.has_value(),
+                   "a truncated CBR mp3 decodes without error (documented invariant)");
+    if (result.has_value() && full.has_value()) {
+        context.expect(result->totalFrames < full->totalFrames,
+                       "the truncated file reports fewer decoded frames");
+    }
+}
+
 void testDecodeAccentedPath(TestContext& context) {
     const std::string path =
         vocalmelody::testing::unicodeTempFilePath("vms_test_layer3_accent.mp3");
@@ -97,6 +129,7 @@ int main() {
     testDecodeMemory(context);
     testDecodeEmptyAndCorruptedFile(context);
     testDecodeNonExistentFile(context);
+    testDecodeTruncatedCbrDocumented(context);
     testDecodeAccentedPath(context);
     return context.result();
 }

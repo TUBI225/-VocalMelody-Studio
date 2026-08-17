@@ -23,7 +23,7 @@ class AudioFileImporter final {
     static constexpr int kMaxChannelCount = 64;
     static constexpr std::int64_t kMaxDecodedSamples = 100'000'000LL;
     static constexpr int kAnalysisSampleRate = 16'000;
-    static constexpr int kAnalysisVersion = 3;
+    static constexpr int kAnalysisVersion = 4;
 
     AudioFileImporter();
 

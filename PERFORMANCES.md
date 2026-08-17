@@ -93,3 +93,21 @@ Ces durées couvrent des suites de tests et non le seul filtre. Le coût CPU/RAM
 - CTest Release final : 6/6 tests réussis en 5,83 s.
 - Le décodeur MP3 produit directement le mono par blocs et ne conserve plus simultanément le PCM brut, des copies par canal et le mono.
 - Le pic mémoire et le temps d'import MP3 isolé ne sont pas encore mesurés ; aucune amélioration chiffrée ne doit donc être annoncée.
+
+## Mesures T-102.3 - rééchantillonnage anti-repliement renforcé (rayon 32, marge 0.78)
+
+- Noyau sinc/Blackman porté de 33 à 67 taps (rayon 16 -> 32) et marge de coupure 0.90 -> 0.78 ; `analysisVersion` passe de 3 à 4.
+- Réponse mesurée le 2026-08-16 (sinus amplitude 0.5, 1 s, sortie 16 kHz ; dB relatifs au niveau d'entrée) :
+
+| Fréquence d'entrée | 44,1 -> 16 kHz (avant -> après) | 48 -> 16 kHz (avant -> après) | 96 -> 16 kHz (avant -> après) |
+|---|---|---|---|
+| 6 kHz | -1,7 -> -3,8 dB | -1,9 -> -4,0 dB | -3,5 -> -4,9 dB |
+| 7 kHz | -5,0 -> -18,6 dB | -5,1 -> -17,2 dB | -5,5 -> -10,6 dB |
+| 7,5 kHz | -7,8 -> -34,2 dB | -7,6 -> -30,3 dB | -6,8 -> -14,6 dB |
+| 8,5 kHz (repliée à 7,5 kHz) | -16,1 -> -80,6 dB | -15,0 -> -78,2 dB | -9,8 -> -26,3 dB |
+| 10 kHz (repliée à 6 kHz) | -40,4 -> -91,9 dB | -35,3 -> -79,1 dB | -15,9 -> -60,5 dB |
+| 12 kHz (repliée à 4 kHz) | -96,3 -> -96,5 dB | -79,4 -> -96,3 dB | -28,3 -> -77,0 dB |
+
+- Contrepartie : la coupure -6 dB passe de ~7,3 kHz à ~6,3 kHz ; le contenu 6-7 kHz subit -4 à -18 dB selon la fréquence. Acceptable pour l'analyse vocale (fondamentale et harmoniques basses), tracé comme limite.
+- Impact temps mesuré : CTest Debug 8/8 en 6,84 s et `audio.file_import` en 3,86 s (contre 3,89 s avant) ; le coût du noyau 67 taps est négligeable devant le décodage et le hachage sur le corpus actuel. Le coût CPU isolé sur un fichier de taille maximale (30 M trames) reste NON MESURÉ.
+- Bande critique 8,5-9,5 kHz (auparavant non testée) couverte en permanence par `SignalAnalysisTests` (48 -> 16 kHz et 96 -> 16 kHz).

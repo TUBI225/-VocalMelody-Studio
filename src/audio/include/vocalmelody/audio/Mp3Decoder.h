@@ -24,6 +24,11 @@ class Mp3Decoder final {
 
     Mp3Decoder() = delete;
 
+    // Invariant documenté : un flux CBR tronqué en fin de fichier est décodé
+    // partiellement sans erreur (le dernier frame incomplet est ignoré, comme
+    // dans la plupart des lecteurs). La durée décodée est alors inférieure à
+    // la durée d'origine ; minimp3 ne fournit aucun signal d'erreur pour ce
+    // cas, donc aucune détection fiable n'est possible au niveau du décodeur.
     [[nodiscard]] static std::optional<DecodedAudioData>
     decodeFile(const std::string& filePath) noexcept;
 

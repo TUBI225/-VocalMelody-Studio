@@ -198,6 +198,38 @@ void testResampleWindowedSinc(TestContext& context) {
                    "filtered resampling rejects empty input");
 }
 
+void testResampleWindowedSincAliasingBand(TestContext& context) {
+    using vocalmelody::frontend::resampleWindowedSinc;
+
+    constexpr int kSourceRate = 48000;
+    constexpr int kTargetRate = 16000;
+
+    // Bande critique : les contenus juste au-dessus de la nouvelle Nyquist
+    // (8 kHz) se replieraient dans la bande 6-7,5 kHz s'ils n'étaient pas
+    // atténués. Mesures 2026-08-16 (rayon 32, marge 0.78) : 8.5 kHz à -78 dB,
+    // 9.5 kHz à -81 dB ; l'ancien noyau 33 taps/marge 0.90 laissait -15 dB.
+    for (const double frequency : {8500.0, 9500.0}) {
+        const auto input = makeSine(kSourceRate, frequency, 1.0);
+        const auto filtered = resampleWindowedSinc(input, kSourceRate, kTargetRate);
+        context.expect(filtered.has_value(), "an out-of-band sine is resampled");
+        if (filtered.has_value()) {
+            context.expect(rmsWithoutEdges(*filtered) < 0.001,
+                           "out-of-band content is suppressed before folding");
+        }
+    }
+
+    // Cas 96 kHz -> 16 kHz : la transition est plus large en Hz ; la fuite
+    // doit rester faible (mesurée -26 dB à 8.5 kHz, contre -9.8 dB avant).
+    constexpr int kSourceRate96 = 96000;
+    const auto input96 = makeSine(kSourceRate96, 8500.0, 1.0);
+    const auto filtered96 = resampleWindowedSinc(input96, kSourceRate96, kTargetRate);
+    context.expect(filtered96.has_value(), "a 96 kHz out-of-band sine is resampled");
+    if (filtered96.has_value()) {
+        context.expect(rmsWithoutEdges(*filtered96) < 0.04,
+                       "96 kHz out-of-band content is suppressed before folding");
+    }
+}
+
 void testResampleWindowedSincFrequencyResponse(TestContext& context) {
     using vocalmelody::frontend::resampleLinear;
     using vocalmelody::frontend::resampleWindowedSinc;
@@ -241,5 +273,6 @@ int main() {
     testResampleLinear(context);
     testResampleWindowedSinc(context);
     testResampleWindowedSincFrequencyResponse(context);
+    testResampleWindowedSincAliasingBand(context);
     return context.result();
 }
