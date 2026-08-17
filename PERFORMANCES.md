@@ -116,4 +116,5 @@ Ces durées couvrent des suites de tests et non le seul filtre. Le coût CPU/RAM
 - CTest Debug final : 10/10 en 11,15 s ; `audio.file_import` 5,48 s.
 - CTest Release final : 10/10 en 7,02 s ; `audio.file_import` 3,95 s.
 - Le décodage JUCE utilise un tampon multicanal de 8192 trames, puis conserve le signal mono complet. Le pic RAM sur un fichier maximal et la latence d'annulation sur corpus réel restent NON MESURÉS.
+- CI PR #9, run `32045569757` : Debug réussi en 4 min 03 s ; Release réussi en 5 min 40 s, téléchargements vérifiés, build et 10 tests inclus.
 - Bande critique 8,5-9,5 kHz (auparavant non testée) couverte en permanence par `SignalAnalysisTests` (48 -> 16 kHz et 96 -> 16 kHz).

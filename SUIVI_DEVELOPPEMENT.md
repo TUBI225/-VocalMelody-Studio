@@ -1193,3 +1193,10 @@ T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus
 - Correctif : téléchargement préalable JUCE/minimp3 par `curl.exe` avec cinq nouvelles tentatives, vérification SHA-256 explicite, puis chemin local Windows normalisé passé aux variables CMake `VOCALMELODY_*_SOURCE_URL`. Les `URL_HASH` de `FetchContent` restent actifs comme seconde vérification.
 - Validation locale du chemin CI : réponses HTTP 429 absorbées par les tentatives, empreintes conformes, configuration CMake propre réussie avec les deux archives locales.
 - Validation CI du correctif : À EXÉCUTER après push.
+
+## Résultat final de la CI de la PR #9
+
+- Correctif poussé au commit `4481e95` (`ci: fiabilise le téléchargement des dépendances`).
+- Run `32045569757` : Windows Debug RÉUSSI en 4 min 03 s et Windows Release RÉUSSI en 5 min 40 s.
+- Chaque job valide le formatage, télécharge et vérifie JUCE/minimp3, configure, compile et exécute 10/10 tests.
+- La PR #9 reste en brouillon dans l'attente de la décision de passage en revue/fusion.
