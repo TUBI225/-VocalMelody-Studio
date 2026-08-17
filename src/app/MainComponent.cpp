@@ -84,12 +84,17 @@ void MainComponent::chooseFileToImport() {
 }
 
 void MainComponent::loadFile(const juce::File& file) {
-    const auto importResult =
+    const auto outcome =
         vocalmelody::audio::AudioFileImporter{}.import(file.getFullPathName().toStdString());
-    if (!importResult.has_value()) {
-        statusLabel_.setText("Import impossible.", juce::dontSendNotification);
+    if (!outcome.has_value()) {
+        const auto reason = vocalmelody::audio::importErrorToString(outcome.error());
+        statusLabel_.setText(
+            "Import impossible : " +
+                juce::String::fromUTF8(reason.data(), static_cast<int>(reason.size())),
+            juce::dontSendNotification);
         return;
     }
+    const auto& importResult = outcome.value();
 
     juce::AudioFormatManager formatManager;
     formatManager.registerBasicFormats();
@@ -110,8 +115,8 @@ void MainComponent::loadFile(const juce::File& file) {
     statusLabel_.setText(audioDeviceReady_ ? "Fichier chargé." : "Fichier analysé sans lecture.",
                          juce::dontSendNotification);
 
-    const auto& source = importResult->source;
-    const auto& analysis = importResult->analysis;
+    const auto& source = importResult.source;
+    const auto& analysis = importResult.analysis;
 
     juce::String diagnostics;
     const auto formatName = vocalmelody::common::audioFormatToString(source.originalFormat());

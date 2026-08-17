@@ -6,12 +6,45 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace vocalmelody::audio {
 
 struct AudioImportResult final {
     common::AudioSource source;
     common::AudioAnalysisResult analysis;
+};
+
+enum class ImportError {
+    FileNotFound,
+    EmptyFile,
+    FileTooLarge,
+    UnsupportedFormat,
+    DecodeFailed,
+    FileModifiedDuringImport,
+    AnalysisFailed,
+    InvalidMetadata,
+    OutOfMemory,
+};
+
+[[nodiscard]] std::string_view importErrorToString(const ImportError error) noexcept;
+
+// Résultat structuré de l'import : valeur en cas de succès, raison précise de
+// l'échec sinon (remplace un `std::optional` muet pour distinguer les causes).
+class AudioImportOutcome final {
+  public:
+    [[nodiscard]] static AudioImportOutcome success(AudioImportResult result) noexcept;
+    [[nodiscard]] static AudioImportOutcome failure(const ImportError error) noexcept;
+
+    [[nodiscard]] bool has_value() const noexcept;
+    [[nodiscard]] explicit operator bool() const noexcept;
+    [[nodiscard]] const AudioImportResult& value() const;
+    [[nodiscard]] const AudioImportResult* operator->() const;
+    [[nodiscard]] ImportError error() const noexcept;
+
+  private:
+    std::optional<AudioImportResult> result_;
+    ImportError error_{ImportError::OutOfMemory};
 };
 
 class AudioFileImporter final {
@@ -27,7 +60,7 @@ class AudioFileImporter final {
 
     AudioFileImporter();
 
-    [[nodiscard]] std::optional<AudioImportResult> import(const std::string& path) const noexcept;
+    [[nodiscard]] AudioImportOutcome import(const std::string& path) const noexcept;
 
   private:
     [[nodiscard]] static std::string computeFileHash(const std::string& path);
