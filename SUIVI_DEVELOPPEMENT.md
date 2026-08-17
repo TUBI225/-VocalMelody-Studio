@@ -1151,4 +1151,13 @@ Les diagnostics ont exposé un bug latent de test : le fichier `.bin` était éc
 - CTest Debug 8/8 ; Release 8/8 ; clang-format 35/35 ; CI à exécuter après publication de la branche.
 - Constat C-04 : RÉSOLU.
 
+## Fusion de la Pull Request #8 (2026-08-17)
+
+- Pull Request #8 passée de brouillon à prête pour révision puis fusionnée le 2026-08-17 avec historique préservé.
+- CI de la PR #8 : run `31987181688`, Windows Debug (4 min 0 s) et Release (6 min 1 s) RÉUSSIS.
+- Merge commit : `e21e52d` (`Merge pull request #8 from TUBI225/feat/import-error-diagnostics`).
+- Branche `feat/import-error-diagnostics` supprimée localement et sur l'origine ; `main` local synchronisé.
+
+Les constats C-01, C-02, C-04, C-05 et C-06 de l'audit du 2026-08-16 sont désormais intégrés à `main`.
+
 T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.

@@ -6,8 +6,8 @@
 - Moteur : VIRE - Vocal Intent Reconstruction Engine
 - Version : 0.1.0 (phase 0 terminée ; phase 1 Audio Frontend PARTIELLE ; phase 2 Pitch Benchmark en cours — socle fusionné)
 - Plateforme cible : Windows x64
-- Branche Git : `main`, propre et synchronisée avec `origin/main` (Pull Requests #1 à #7 fusionnées)
-- Dernier commit poussé sur `main` : `df6eefa` - Merge pull request #7 from TUBI225/phase2/resampler-anti-aliasing
+- Branche Git : `main`, propre et synchronisée avec `origin/main` (Pull Requests #1 à #8 fusionnées)
+- Dernier commit poussé sur `main` : `e21e52d` - Merge pull request #8 from TUBI225/feat/import-error-diagnostics
 - Dernière mise à jour : 2026-08-17 (audit du 2026-08-16 : PR #6 plafonds/Unicode et PR #7 anti-repliement renforcé fusionnées)
 
 ## État général
@@ -16,7 +16,7 @@ La phase 0 est terminée (T-000 et T-001, PR #1 fusionnée). La **phase 1 Audio 
 
 Le **socle de la phase 2 (Pitch Benchmark)** est implémenté, validé et **fusionné dans `main` (PR #3, merge commit `466f4cb`)** : structures `PitchFrame` / `PitchCandidate` / `PitchDistributionFrame` et types forts `MidiPitch` / `Cents` dans `src/common`, interface `IPitchEstimator` et baseline `AutocorrelationPitchEstimator` dans le nouveau module `src/pitch` (sans JUCE). La correction T-102.1 est fusionnée par la PR #4 (`41463c9`). T-102.2 est fusionnée par la PR #5 (`70b801f`) : le sinc/Blackman polyphasé remplace le chemin d'analyse linéaire et `analysisVersion` passe à 3 ; Debug/Release 8/8, formatage 35/35 et CI finale sont verts. Le benchmark proprement dit reste à réaliser.
 
-L'**audit du 2026-08-16** (`AUDIT_2026-08-16.md`, non exhaustif) a été consigné (`da2397d`) et ses constats confirmés sont intégrés : la **PR #6** (`06b653e`) borne le décodage (≤ 64 canaux, ≤ 100 M échantillons décodés avant allocation) et rend les chemins MP3/métadonnées compatibles Unicode Windows ; la **PR #7** (`df6eefa`) renforce l'anti-repliement du rééchantillonneur (noyau 67 taps, marge 0.78, `analysisVersion` 4) avec la bande critique 8,5-9,5 kHz mesurée et testée, et documente l'invariant MP3 CBR tronqué. Debug/Release 8/8 et CI verte sur les deux PR. La **PR #8** ajoute les diagnostics d'échec d'import (`ImportError`/`AudioImportOutcome`, rejet des formats inconnus avant décodage, raison affichée dans l'UI) — constat C-04 résolu. Reste : corpus musical réel, validation manuelle de la lecture et M4A.
+L'**audit du 2026-08-16** (`AUDIT_2026-08-16.md`, non exhaustif) a été consigné (`da2397d`) et ses constats confirmés sont intégrés : la **PR #6** (`06b653e`) borne le décodage (≤ 64 canaux, ≤ 100 M échantillons décodés avant allocation) et rend les chemins MP3/métadonnées compatibles Unicode Windows ; la **PR #7** (`df6eefa`) renforce l'anti-repliement du rééchantillonneur (noyau 67 taps, marge 0.78, `analysisVersion` 4) avec la bande critique 8,5-9,5 kHz mesurée et testée, et documente l'invariant MP3 CBR tronqué. Debug/Release 8/8 et CI verte sur les trois PR. La **PR #8** (`e21e52d`) ajoute les diagnostics d'échec d'import (`ImportError`/`AudioImportOutcome`, rejet des formats inconnus avant décodage, raison affichée dans l'UI) — constat C-04 résolu. Reste : corpus musical réel, validation manuelle de la lecture et M4A.
 
 ## Tâches par statut
 
