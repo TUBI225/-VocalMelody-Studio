@@ -36,6 +36,7 @@
 ## Sécurité du build - phase 0
 
 - L'archive JUCE est liée à un commit immuable et vérifiée par SHA-256 avant extraction.
+- La CI retente les téléchargements JUCE/minimp3, vérifie leurs SHA-256 puis transmet uniquement les archives locales vérifiées à `FetchContent`.
 - La CI possède uniquement la permission `contents: read`.
 - `actions/checkout` est épinglée par SHA de commit et non par simple branche.
 - Les modules JUCE `curl` et navigateur embarqué sont désactivés dans le socle afin de ne pas ajouter de communication réseau à l'application.

@@ -1184,3 +1184,12 @@ Synchroniser la documentation avec les PR #6 à #8, rendre le contrat d'import i
 - CI : NON EXÉCUTÉE, branche non poussée.
 
 T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.
+
+# 2026-08-17 - Résilience des téléchargements CI de la PR #9
+
+- Première exécution CI `32044324483`, tentative 1 : Debug et Release échouent pendant `FetchContent` avant compilation (`codeload.github.com`, curl 22, flux HTTP/2 annulé).
+- Relance des jobs échoués, tentative 2 : même panne de téléchargement JUCE sur les deux runners ; formatage réussi avant l'échec.
+- Cause : panne réseau externe et répétitive, sans lien avec les sources C++ de la PR.
+- Correctif : téléchargement préalable JUCE/minimp3 par `curl.exe` avec cinq nouvelles tentatives, vérification SHA-256 explicite, puis chemin local Windows normalisé passé aux variables CMake `VOCALMELODY_*_SOURCE_URL`. Les `URL_HASH` de `FetchContent` restent actifs comme seconde vérification.
+- Validation locale du chemin CI : réponses HTTP 429 absorbées par les tentatives, empreintes conformes, configuration CMake propre réussie avec les deux archives locales.
+- Validation CI du correctif : À EXÉCUTER après push.
