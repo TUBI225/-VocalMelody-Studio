@@ -4,9 +4,12 @@
 #include <vocalmelody/common/AudioSource.h>
 
 #include <cstdint>
+#include <functional>
 #include <optional>
+#include <stop_token>
 #include <string>
 #include <string_view>
+#include <variant>
 
 namespace vocalmelody::audio {
 
@@ -25,26 +28,50 @@ enum class ImportError {
     AnalysisFailed,
     InvalidMetadata,
     OutOfMemory,
+    Cancelled,
+    InternalError,
 };
 
 [[nodiscard]] std::string_view importErrorToString(const ImportError error) noexcept;
+
+enum class ImportStage {
+    Validating,
+    HashingSource,
+    Decoding,
+    AnalyzingSource,
+    Resampling,
+    AnalyzingResult,
+    VerifyingSource,
+    Finalizing,
+};
+
+[[nodiscard]] std::string_view importStageToString(ImportStage stage) noexcept;
+
+struct AudioImportProgress final {
+    ImportStage stage{ImportStage::Validating};
+    double fraction{0.0};
+};
+
+using AudioImportProgressCallback = std::function<void(const AudioImportProgress&)>;
 
 // Résultat structuré de l'import : valeur en cas de succès, raison précise de
 // l'échec sinon (remplace un `std::optional` muet pour distinguer les causes).
 class AudioImportOutcome final {
   public:
-    [[nodiscard]] static AudioImportOutcome success(AudioImportResult result) noexcept;
+    [[nodiscard]] static AudioImportOutcome success(AudioImportResult result);
     [[nodiscard]] static AudioImportOutcome failure(const ImportError error) noexcept;
 
     [[nodiscard]] bool has_value() const noexcept;
     [[nodiscard]] explicit operator bool() const noexcept;
     [[nodiscard]] const AudioImportResult& value() const;
     [[nodiscard]] const AudioImportResult* operator->() const;
-    [[nodiscard]] ImportError error() const noexcept;
+    [[nodiscard]] ImportError error() const;
 
   private:
-    std::optional<AudioImportResult> result_;
-    ImportError error_{ImportError::OutOfMemory};
+    explicit AudioImportOutcome(AudioImportResult result);
+    explicit AudioImportOutcome(ImportError error) noexcept;
+
+    std::variant<AudioImportResult, ImportError> state_;
 };
 
 class AudioFileImporter final {
@@ -60,10 +87,16 @@ class AudioFileImporter final {
 
     AudioFileImporter();
 
-    [[nodiscard]] AudioImportOutcome import(const std::string& path) const noexcept;
+    [[nodiscard]] AudioImportOutcome
+    import(const std::string& path, std::stop_token stopToken = {},
+           AudioImportProgressCallback progressCallback = {}) const noexcept;
 
   private:
-    [[nodiscard]] static std::string computeFileHash(const std::string& path);
+    [[nodiscard]] static std::string computeFileHash(const std::string& path,
+                                                     std::stop_token stopToken,
+                                                     const AudioImportProgressCallback& progress,
+                                                     ImportStage stage, double progressStart,
+                                                     double progressEnd);
 };
 
 } // namespace vocalmelody::audio

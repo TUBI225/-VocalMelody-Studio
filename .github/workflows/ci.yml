@@ -33,12 +33,55 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
+      - name: Download pinned dependencies
+        shell: pwsh
+        run: |
+          $dependencyDirectory = Join-Path $env:RUNNER_TEMP "vocalmelody-dependencies"
+          New-Item -ItemType Directory -Force -Path $dependencyDirectory | Out-Null
+
+          $dependencies = @(
+            @{
+              Name = "JUCE"
+              Url = "https://github.com/juce-framework/JUCE/archive/91ad83ae34a81e0833b1a2b0866f54846370ae53.tar.gz"
+              File = "juce.tar.gz"
+              Sha256 = "04f8d5055382582c757be9da069ea98338005f98248facd9c2804435ac853e70"
+              Environment = "VOCALMELODY_CI_JUCE_URL"
+            },
+            @{
+              Name = "minimp3"
+              Url = "https://github.com/lieff/minimp3/archive/ea99364f61c14656440e8d77e9c233ccf3124633.tar.gz"
+              File = "minimp3.tar.gz"
+              Sha256 = "5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34"
+              Environment = "VOCALMELODY_CI_MINIMP3_URL"
+            }
+          )
+
+          foreach ($dependency in $dependencies) {
+            $archive = Join-Path $dependencyDirectory $dependency.File
+            & curl.exe --fail --location --retry 5 --retry-all-errors --retry-delay 5 `
+              --output $archive $dependency.Url
+            if ($LASTEXITCODE -ne 0) {
+              throw "Téléchargement de $($dependency.Name) impossible après plusieurs tentatives."
+            }
+
+            $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $archive).Hash.ToLowerInvariant()
+            if ($actualHash -ne $dependency.Sha256) {
+              throw "SHA-256 invalide pour $($dependency.Name) : $actualHash"
+            }
+
+            $archivePath = (Resolve-Path -LiteralPath $archive).Path.Replace('\', '/')
+            "$($dependency.Environment)=$archivePath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
       - name: Configure
-        run: >-
-          cmake -S . -B build -A x64
-          -DBUILD_TESTING=ON
-          -DVOCALMELODY_BUILD_APP=ON
-          -DVOCALMELODY_WARNINGS_AS_ERRORS=ON
+        shell: pwsh
+        run: |
+          cmake -S . -B build -A x64 `
+            -DBUILD_TESTING=ON `
+            -DVOCALMELODY_BUILD_APP=ON `
+            -DVOCALMELODY_WARNINGS_AS_ERRORS=ON `
+            "-DVOCALMELODY_JUCE_SOURCE_URL=$env:VOCALMELODY_CI_JUCE_URL" `
+            "-DVOCALMELODY_MINIMP3_SOURCE_URL=$env:VOCALMELODY_CI_MINIMP3_URL"
 
       - name: Build
         run: cmake --build build --config ${{ matrix.configuration }} --parallel

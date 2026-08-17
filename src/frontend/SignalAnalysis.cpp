@@ -26,6 +26,17 @@ constexpr double kPi = 3.14159265358979323846;
 
 [[nodiscard]] float square(const float value) noexcept { return value * value; }
 
+void reportProgress(const ProcessingProgressCallback& callback, const double progress) noexcept {
+    if (!callback) {
+        return;
+    }
+    try {
+        callback(std::clamp(progress, 0.0, 1.0));
+    } catch (...) {
+        // Une notification d'interface ne doit jamais faire échouer le traitement audio.
+    }
+}
+
 [[nodiscard]] std::optional<std::size_t> resampledFrameCount(const std::size_t inputSize,
                                                              const int sourceSampleRate,
                                                              const int targetSampleRate) noexcept {
@@ -82,8 +93,9 @@ constexpr double kPi = 3.14159265358979323846;
 } // namespace
 
 std::optional<SignalStats> analyzeSignal(const std::span<const float> monoFrames,
-                                         const int sampleRate) noexcept {
-    if (monoFrames.empty() || sampleRate <= 0) {
+                                         const int sampleRate,
+                                         const std::stop_token stopToken) noexcept {
+    if (monoFrames.empty() || sampleRate <= 0 || stopToken.stop_requested()) {
         return std::nullopt;
     }
 
@@ -92,7 +104,11 @@ std::optional<SignalStats> analyzeSignal(const std::span<const float> monoFrames
     std::size_t clippedFrames = 0;
     std::size_t silentFrames = 0;
 
+    std::size_t frameIndex = 0;
     for (const float frame : monoFrames) {
+        if ((frameIndex++ % 4096U) == 0U && stopToken.stop_requested()) {
+            return std::nullopt;
+        }
         const double magnitude = std::abs(static_cast<double>(frame));
         sumSquares += square(frame);
         peak = std::max(peak, magnitude);
@@ -113,14 +129,18 @@ std::optional<SignalStats> analyzeSignal(const std::span<const float> monoFrames
 }
 
 std::vector<common::SilenceSegment> detectSilenceSegments(const std::span<const float> monoFrames,
-                                                          const int sampleRate) {
+                                                          const int sampleRate,
+                                                          const std::stop_token stopToken) {
     std::vector<common::SilenceSegment> segments;
-    if (monoFrames.empty() || sampleRate <= 0) {
+    if (monoFrames.empty() || sampleRate <= 0 || stopToken.stop_requested()) {
         return segments;
     }
 
     std::size_t runStart = 0;
     while (runStart < monoFrames.size()) {
+        if ((runStart % 4096U) == 0U && stopToken.stop_requested()) {
+            return {};
+        }
         if (std::abs(static_cast<double>(monoFrames[runStart])) >= kSilenceAmplitude) {
             ++runStart;
             continue;
@@ -151,11 +171,16 @@ std::vector<common::SilenceSegment> detectSilenceSegments(const std::span<const 
     return segments;
 }
 
-std::optional<float> estimateNoiseFloor(const std::span<const float> monoFrames) noexcept {
+std::optional<float> estimateNoiseFloor(const std::span<const float> monoFrames,
+                                        const std::stop_token stopToken) noexcept {
     double sumSquares = 0.0;
     std::size_t silentFrames = 0;
 
+    std::size_t frameIndex = 0;
     for (const float frame : monoFrames) {
+        if ((frameIndex++ % 4096U) == 0U && stopToken.stop_requested()) {
+            return std::nullopt;
+        }
         if (std::abs(static_cast<double>(frame)) < kSilenceAmplitude) {
             sumSquares += square(frame);
             ++silentFrames;
@@ -213,14 +238,20 @@ std::optional<std::vector<float>> resampleLinear(const std::span<const float> in
     return output;
 }
 
-std::optional<std::vector<float>> resampleWindowedSinc(const std::span<const float> input,
-                                                       const int sourceSampleRate,
-                                                       const int targetSampleRate) {
+std::optional<std::vector<float>>
+resampleWindowedSinc(const std::span<const float> input, const int sourceSampleRate,
+                     const int targetSampleRate, const std::stop_token stopToken,
+                     ProcessingProgressCallback progressCallback) {
+    if (stopToken.stop_requested()) {
+        return std::nullopt;
+    }
+    reportProgress(progressCallback, 0.0);
     const auto outputSize = resampledFrameCount(input.size(), sourceSampleRate, targetSampleRate);
     if (!outputSize.has_value()) {
         return std::nullopt;
     }
     if (sourceSampleRate == targetSampleRate) {
+        reportProgress(progressCallback, 1.0);
         return std::vector<float>(input.begin(), input.end());
     }
 
@@ -235,6 +266,13 @@ std::optional<std::vector<float>> resampleWindowedSinc(const std::span<const flo
 
     std::vector<float> output(*outputSize, 0.0F);
     for (std::size_t outputIndex = 0; outputIndex < *outputSize; ++outputIndex) {
+        if ((outputIndex % 1024U) == 0U) {
+            if (stopToken.stop_requested()) {
+                return std::nullopt;
+            }
+            reportProgress(progressCallback,
+                           static_cast<double>(outputIndex) / static_cast<double>(*outputSize));
+        }
         const double sourcePosition = static_cast<double>(outputIndex) * sourceStep;
         const auto centerIndex = static_cast<std::int64_t>(std::floor(sourcePosition));
         const double fraction = sourcePosition - static_cast<double>(centerIndex);
@@ -264,6 +302,7 @@ std::optional<std::vector<float>> resampleWindowedSinc(const std::span<const flo
         output[outputIndex] = static_cast<float>(weightedSum / weightSum);
     }
 
+    reportProgress(progressCallback, 1.0);
     return output;
 }
 

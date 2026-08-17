@@ -93,4 +93,16 @@ Les décisions sont conservées dans l'ordre chronologique. Une décision rempla
 - Justification : implémentation pure, déterministe et indépendante de JUCE ; un test 48→16 kHz conserve un sinus de 1 kHz dans sa plage RMS attendue et atténue un sinus de 12 kHz sous 0,01 RMS, contrairement à l'interpolation linéaire.
 - Limites : preuve spectrale ciblée seulement ; chirps, voix, vibrato, glissando, coût CPU/RAM isolé et comparaison avec une bibliothèque de référence restent à mesurer.
 - Conséquences : `analysisSampleRate=16000` et `analysisVersion=3` ; les métadonnées produites par l'interpolation linéaire version 2 restent distinguables. `resampleLinear` est conservé uniquement comme référence comparative de test.
+- Mise à jour mesurée du 2026-08-17 : la bande 8,5-10 kHz a révélé une fuite du noyau initial. Le rayon passe à 32 (67 taps), la marge de coupure à 0,78 et `analysisVersion` à 4. Les anciennes versions 2 et 3 restent identifiables ; la contrepartie mesurée est une coupure d'environ -6 dB vers 6,3 kHz.
 - Condition de révision : benchmark vocal ou mesures de performance montrant qu'un filtre différent offre un meilleur compromis précision/CPU/RAM.
+
+## ADR-008 - Import audio asynchrone, progressif et annulable
+
+- Date : 2026-08-17
+- Statut : ACCEPTÉE, VALIDATION LOCALE
+- Problème : le double SHA-256, le décodage, l'analyse et le rééchantillonnage bloquaient le thread d'interface sans progression ni annulation.
+- Choix retenu : `AudioImportWorker` possède un `std::jthread`. Le `std::stop_token` traverse l'importeur, le hachage, les boucles de décodage, les analyses et le resampler. Les callbacks de progression et de fin sont retransmis au thread JUCE avec un `SafePointer`.
+- Contrat : une annulation retourne exclusivement `ImportError::Cancelled` et ne publie pas d'`AudioImportResult`. Un nouvel import annule et rejoint le précédent. La destruction du worker demande l'arrêt et rejoint le thread.
+- Conséquences : l'interface reste réactive et présente huit étapes de progression ; le décodage JUCE n'alloue plus un tampon multicanal couvrant tout le fichier.
+- Limites : le signal mono final reste entièrement en mémoire ; l'ouverture initiale de certains codecs est un point d'annulation grossier ; aucune reprise intermédiaire persistante.
+- Condition de révision : mesures sur corpus long montrant un besoin de streaming de bout en bout, de reprise persistante ou d'un pool de tâches.

@@ -13,6 +13,16 @@ include(FetchContent)
 option(VOCALMELODY_BUILD_APP "Build the JUCE desktop application" ON)
 option(VOCALMELODY_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 
+set(VOCALMELODY_JUCE_SOURCE_URL
+    "https://github.com/juce-framework/JUCE/archive/91ad83ae34a81e0833b1a2b0866f54846370ae53.tar.gz"
+    CACHE STRING "JUCE archive URL or local file URI"
+)
+set(VOCALMELODY_MINIMP3_SOURCE_URL
+    "https://github.com/lieff/minimp3/archive/ea99364f61c14656440e8d77e9c233ccf3124633.tar.gz"
+    CACHE STRING "minimp3 archive URL or local file URI"
+)
+mark_as_advanced(VOCALMELODY_JUCE_SOURCE_URL VOCALMELODY_MINIMP3_SOURCE_URL)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -28,7 +38,7 @@ add_subdirectory(src/pitch)
 if(VOCALMELODY_BUILD_APP)
     FetchContent_Declare(
         JUCE
-        URL https://github.com/juce-framework/JUCE/archive/91ad83ae34a81e0833b1a2b0866f54846370ae53.tar.gz
+        URL "${VOCALMELODY_JUCE_SOURCE_URL}"
         URL_HASH SHA256=04f8d5055382582c757be9da069ea98338005f98248facd9c2804435ac853e70
         DOWNLOAD_EXTRACT_TIMESTAMP OFF
     )
@@ -36,7 +46,7 @@ if(VOCALMELODY_BUILD_APP)
 
     FetchContent_Declare(
         minimp3
-        URL https://github.com/lieff/minimp3/archive/ea99364f61c14656440e8d77e9c233ccf3124633.tar.gz
+        URL "${VOCALMELODY_MINIMP3_SOURCE_URL}"
         URL_HASH SHA256=5628166eb82a9bb581317918a334c317a2c0a30278bb14a20381307976768f34
         DOWNLOAD_EXTRACT_TIMESTAMP OFF
     )

@@ -1160,4 +1160,43 @@ Les diagnostics ont exposé un bug latent de test : le fichier `.bin` était éc
 
 Les constats C-01, C-02, C-04, C-05 et C-06 de l'audit du 2026-08-16 sont désormais intégrés à `main`.
 
+# 2026-08-17 - Durcissement de l'import et exécution hors interface
+
+## Objectif
+
+Synchroniser la documentation avec les PR #6 à #8, rendre le contrat d'import impossible à lire dans le mauvais état, corriger les interfaces CMake publiques et supprimer le blocage de l'interface pendant l'import.
+
+## Implémentation
+
+- Branche locale `fix/audit-hardening-async-import`, créée depuis `main` à `0aaaec1` ; aucune publication distante à ce stade.
+- `AudioImportOutcome` utilise `std::variant<AudioImportResult, ImportError>` ; `Cancelled` et `InternalError` complètent les causes, et `std::bad_alloc` reste distinguée.
+- Toutes les erreurs déclenchables de façon déterministe par une entrée ou une annulation sont testées : fichier absent/vide/trop grand, format non pris en charge, décodage, modification concurrente, analyse et annulation. Les erreurs de construction de métadonnées, mémoire et exception interne sont couvertes au niveau du contrat, car elles ne sont pas injectables sûrement par un fichier de test.
+- `Frontend` et `Pitch` propagent `VocalMelody::Common` en `PUBLIC` ; deux exécutables consommateurs ne lient volontairement que la cible publique.
+- `AudioImportWorker` exécute l'import dans un `std::jthread`, relaie la progression, permet l'annulation et rejoint le travail à la destruction. L'UI propose « Annuler » et reçoit les callbacks sur le thread de messages via `SafePointer`.
+- Le décodage JUCE traite des blocs de 8192 trames ; le hachage, minimp3, les analyses et le sinc vérifient le `std::stop_token`.
+
+## Validation locale
+
+- Build Debug et Release : RÉUSSIS avec avertissements traités comme erreurs.
+- CTest Debug final : 10/10 en 11,15 s ; Release final : 10/10 en 7,02 s.
+- Tests nouveaux : consommateurs CMake Frontend/Pitch, contrat variant, erreurs atteignables, progression, exécution hors thread appelant et annulation du worker.
+- `clang-format --dry-run --Werror` sur tous les fichiers C++/H et `git diff --check` : RÉUSSIS.
+- CI : NON EXÉCUTÉE, branche non poussée.
+
 T-102.2 est fusionnée et close. T-102 reste EN COURS pour les chirps, le corpus vocal, les estimateurs cibles, les mesures CPU/RAM et la sélection FAST/BALANCED/HIGH QUALITY.
+
+# 2026-08-17 - Résilience des téléchargements CI de la PR #9
+
+- Première exécution CI `32044324483`, tentative 1 : Debug et Release échouent pendant `FetchContent` avant compilation (`codeload.github.com`, curl 22, flux HTTP/2 annulé).
+- Relance des jobs échoués, tentative 2 : même panne de téléchargement JUCE sur les deux runners ; formatage réussi avant l'échec.
+- Cause : panne réseau externe et répétitive, sans lien avec les sources C++ de la PR.
+- Correctif : téléchargement préalable JUCE/minimp3 par `curl.exe` avec cinq nouvelles tentatives, vérification SHA-256 explicite, puis chemin local Windows normalisé passé aux variables CMake `VOCALMELODY_*_SOURCE_URL`. Les `URL_HASH` de `FetchContent` restent actifs comme seconde vérification.
+- Validation locale du chemin CI : réponses HTTP 429 absorbées par les tentatives, empreintes conformes, configuration CMake propre réussie avec les deux archives locales.
+- Validation CI du correctif : À EXÉCUTER après push.
+
+## Résultat final de la CI de la PR #9
+
+- Correctif poussé au commit `4481e95` (`ci: fiabilise le téléchargement des dépendances`).
+- Run `32045569757` : Windows Debug RÉUSSI en 4 min 03 s et Windows Release RÉUSSI en 5 min 40 s.
+- Chaque job valide le formatage, télécharge et vérifie JUCE/minimp3, configure, compile et exécute 10/10 tests.
+- La PR #9 reste en brouillon dans l'attente de la décision de passage en revue/fusion.

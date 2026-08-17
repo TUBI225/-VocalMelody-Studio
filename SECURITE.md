@@ -36,6 +36,7 @@
 ## Sécurité du build - phase 0
 
 - L'archive JUCE est liée à un commit immuable et vérifiée par SHA-256 avant extraction.
+- La CI retente les téléchargements JUCE/minimp3, vérifie leurs SHA-256 puis transmet uniquement les archives locales vérifiées à `FetchContent`.
 - La CI possède uniquement la permission `contents: read`.
 - `actions/checkout` est épinglée par SHA de commit et non par simple branche.
 - Les modules JUCE `curl` et navigateur embarqué sont désactivés dans le socle afin de ne pas ajouter de communication réseau à l'application.
@@ -49,16 +50,17 @@ Limite : le téléchargement de dépendance rend le premier build dépendant du 
 - Rejet avant décodage des fichiers absents, vides, supérieurs à 1 Gio ou annonçant plus de 30 millions de trames.
 - Vérification du retour de lecture du codec et des bornes canaux/sample rate/durée avant allocation.
 - SHA-256 calculé avant et après décodage ; un fichier modifié pendant l'opération est rejeté.
-- Toutes les exceptions à la frontière d'import sont converties en échec contrôlé.
+- `std::bad_alloc` est classée `OutOfMemory` ; toute autre exception inattendue devient `InternalError`.
+- L'import s'exécute sur un worker, accepte un `std::stop_token` et ne construit aucun résultat valide après annulation.
 - Le fichier audio original est ouvert en lecture et n'est jamais réécrit par l'importeur.
 
-Limites restantes : l'import est synchrone sur le thread UI, le signal complet est chargé en mémoire sous le plafond, l'erreur affichée reste générique et aucun fuzzing des codecs n'a été exécuté. Le JSON de métadonnées est écrit directement et non encore par remplacement atomique ; il ne doit pas être utilisé comme sauvegarde projet critique.
+Limites restantes : le signal mono complet est chargé en mémoire sous le plafond et aucun fuzzing des codecs n'a été exécuté. Les échecs sont classés par `ImportError` et affichés dans l'interface ; l'annulation est coopérative et certains appels de codec peuvent rester brièvement non interruptibles. Le JSON de métadonnées est écrit directement et non encore par remplacement atomique ; il ne doit pas être utilisé comme sauvegarde projet critique.
 
 ## Sécurité du décodeur MP3 - T-101.8
 
 - `minimp3` est épinglé au commit `ea99364f61c14656440e8d77e9c233ccf3124633` et son archive est contrôlée par SHA-256 ; sa licence CC0 est enregistrée dans `DEPENDANCES.md`.
 - L'entrée conserve le plafond de 1 Gio ; le résultat est limité à 30 millions de trames, un ou deux canaux, un sample rate positif et un nombre d'échantillons divisible par le nombre de canaux.
-- Le décodage doit être complet et sans erreur ; les ressources natives sont libérées par RAII.
+- Les erreurs signalées par minimp3 et les décodages incomplets par rapport au nombre de trames annoncé sont rejetés ; les ressources natives sont libérées par RAII. Un CBR tronqué en fin de fichier peut être accepté avec une durée réduite lorsque minimp3 ne signale aucune erreur ; cet invariant est testé et documenté.
 - Les tests couvrent un vrai vecteur Layer III non silencieux, la mémoire, le fichier, les données corrompues et une extension trompeuse.
 
 Limites restantes : aucun fuzzing ni corpus utilisateur hostile n'a encore été exécuté. Le statut CC0 et l'épinglage réduisent le risque de chaîne d'approvisionnement, mais ne constituent pas à eux seuls un avis juridique exhaustif.

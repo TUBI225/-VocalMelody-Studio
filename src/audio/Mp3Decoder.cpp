@@ -32,11 +32,23 @@ class DecoderGuard final {
     mp3dec_ex_t& decoder_;
 };
 
-[[nodiscard]] std::optional<DecodedAudioData> processDecoder(mp3dec_ex_t& dec) noexcept {
+void reportProgress(const Mp3ProgressCallback& callback, const double progress) noexcept {
+    if (!callback) {
+        return;
+    }
+    try {
+        callback(std::clamp(progress, 0.0, 1.0));
+    } catch (...) {
+    }
+}
+
+[[nodiscard]] std::optional<DecodedAudioData>
+processDecoder(mp3dec_ex_t& dec, const std::stop_token stopToken,
+               const Mp3ProgressCallback& progressCallback) noexcept {
     DecoderGuard guard(dec);
     try {
-        if (dec.info.channels < 1 || dec.info.channels > 2 || dec.info.hz <= 0 ||
-            dec.samples == 0) {
+        if (stopToken.stop_requested() || dec.info.channels < 1 || dec.info.channels > 2 ||
+            dec.info.hz <= 0 || dec.samples == 0) {
             return std::nullopt;
         }
 
@@ -60,9 +72,13 @@ class DecoderGuard final {
         result.bitDepth = 16;
         result.totalFrames = static_cast<std::int64_t>(totalFrames);
         result.monoSamples.reserve(totalFrames);
+        reportProgress(progressCallback, 0.0);
 
         std::size_t decodedSamples = 0;
         while (decodedSamples < totalSamples) {
+            if (stopToken.stop_requested()) {
+                return std::nullopt;
+            }
             mp3d_sample_t* framePcm = nullptr;
             mp3dec_frame_info_t frameInfo{};
             const auto frameSamples =
@@ -85,6 +101,8 @@ class DecoderGuard final {
                     static_cast<float>(channelSum / static_cast<double>(channels)));
             }
             decodedSamples += frameSamples;
+            reportProgress(progressCallback,
+                           static_cast<double>(decodedSamples) / static_cast<double>(totalSamples));
         }
 
         if (dec.last_error != 0 || decodedSamples != totalSamples ||
@@ -100,8 +118,10 @@ class DecoderGuard final {
 
 } // namespace
 
-std::optional<DecodedAudioData> Mp3Decoder::decodeFile(const std::string& filePath) noexcept {
-    if (filePath.empty()) {
+std::optional<DecodedAudioData>
+Mp3Decoder::decodeFile(const std::string& filePath, const std::stop_token stopToken,
+                       Mp3ProgressCallback progressCallback) noexcept {
+    if (filePath.empty() || stopToken.stop_requested()) {
         return std::nullopt;
     }
 
@@ -130,15 +150,16 @@ std::optional<DecodedAudioData> Mp3Decoder::decodeFile(const std::string& filePa
         }
 #endif
 
-        return processDecoder(dec);
+        return processDecoder(dec, stopToken, progressCallback);
     } catch (...) {
         return std::nullopt;
     }
 }
 
 std::optional<DecodedAudioData>
-Mp3Decoder::decodeMemory(const std::span<const std::uint8_t> data) noexcept {
-    if (data.empty() || data.size() > kMaxMp3SizeBytes) {
+Mp3Decoder::decodeMemory(const std::span<const std::uint8_t> data, const std::stop_token stopToken,
+                         Mp3ProgressCallback progressCallback) noexcept {
+    if (data.empty() || data.size() > kMaxMp3SizeBytes || stopToken.stop_requested()) {
         return std::nullopt;
     }
 
@@ -149,7 +170,7 @@ Mp3Decoder::decodeMemory(const std::span<const std::uint8_t> data) noexcept {
             return std::nullopt;
         }
 
-        return processDecoder(dec);
+        return processDecoder(dec, stopToken, progressCallback);
     } catch (...) {
         return std::nullopt;
     }

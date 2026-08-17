@@ -19,6 +19,13 @@ vocalmelody_enable_warnings(VocalMelodyFrontendTests)
 
 add_test(NAME frontend.signal_analysis COMMAND VocalMelodyFrontendTests)
 
+# Ces consommateurs ne lient volontairement que la cible publique testée. Ils
+# échouent à compiler si Common cesse d'être propagé par l'interface CMake.
+add_executable(VocalMelodyFrontendPublicConsumerTests unit/FrontendPublicApiConsumerTests.cpp)
+target_link_libraries(VocalMelodyFrontendPublicConsumerTests PRIVATE VocalMelody::Frontend)
+vocalmelody_enable_warnings(VocalMelodyFrontendPublicConsumerTests)
+add_test(NAME cmake.frontend_public_consumer COMMAND VocalMelodyFrontendPublicConsumerTests)
+
 add_executable(VocalMelodyPitchTests unit/PitchStructuresTests.cpp)
 
 target_link_libraries(VocalMelodyPitchTests PRIVATE VocalMelody::Common)
@@ -32,6 +39,11 @@ target_link_libraries(VocalMelodyPitchEstimatorTests PRIVATE VocalMelody::Pitch 
 vocalmelody_enable_warnings(VocalMelodyPitchEstimatorTests)
 
 add_test(NAME pitch.autocorrelation COMMAND VocalMelodyPitchEstimatorTests)
+
+add_executable(VocalMelodyPitchPublicConsumerTests unit/PitchPublicApiConsumerTests.cpp)
+target_link_libraries(VocalMelodyPitchPublicConsumerTests PRIVATE VocalMelody::Pitch)
+vocalmelody_enable_warnings(VocalMelodyPitchPublicConsumerTests)
+add_test(NAME cmake.pitch_public_consumer COMMAND VocalMelodyPitchPublicConsumerTests)
 
 if(TARGET VocalMelody::Audio)
     add_executable(VocalMelodyAudioImporterTests unit/AudioImporterTests.cpp)
